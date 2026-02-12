@@ -1,4 +1,5 @@
 import Parser from "rss-parser";
+import RSSFeed from "../models/RSSFeed.js";
 
 const parser = new Parser();
 
@@ -14,12 +15,28 @@ export const updateRSSFeeds = async () => {
     }
 
     for (const feedUrl of feeds) {
-      try {
-        const feed = await parser.parseURL(feedUrl);
-        console.log(`RSS fetched: ${feed.title}`);
-      } catch (err) {
-        console.error(`RSS error (${feedUrl}):`, err.message);
+      const feed = await parser.parseURL(feedUrl);
+
+      for (const item of feed.items.slice(0, 5)) {
+        await RSSFeed.updateOne(
+          { sourceUrl: item.link }, // unique field
+          {
+            title: item.title || "Untitled",
+            speaker: feed.title || "Unknown",
+            dateTime: item.pubDate ? new Date(item.pubDate) : new Date(),
+
+            sourceUrl: item.link,
+            sourceType: "rss",
+
+            mediaContent: item.enclosure?.url || null,
+            mediaThumbnail: item.itunes?.image || null,
+            itunesImage: item.itunes?.image || null
+          },
+          { upsert: true }
+        );
       }
+
+      console.log(`✅ RSS saved: ${feed.title}`);
     }
   } catch (error) {
     console.error("RSS service error:", error.message);

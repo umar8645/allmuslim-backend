@@ -4,13 +4,16 @@ import { fetchLatestVideos } from "../services/youtubeService.js";
 import { fetchExternalWaazi } from "../services/waaziApiService.js";
 
 export const startScheduler = () => {
-  cron.schedule("0 * * * *", async () => {
-    console.log("Running scheduled jobs...");
+  console.log("✅ Scheduler started");
+
+  // Run every 5 minutes
+  cron.schedule("*/5 * * * *", async () => {
+    console.log("🕒 Running scheduled jobs...");
 
     await updateRSSFeeds();
     await fetchLatestVideos();
     await fetchExternalWaazi();
 
-    console.log("Scheduled jobs finished");
+    console.log("✅ Scheduled jobs finished");
   });
 };
