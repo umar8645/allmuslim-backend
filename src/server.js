@@ -7,6 +7,7 @@ import rateLimit from "express-rate-limit";
 
 import connectDB from "./config/db.js";
 import { startScheduler } from "./jobs/scheduler.js";
+import "./workers/contentWorker.js"; // ✅ IMPORTANT: Start BullMQ Worker
 
 import rssRoutes from "./routes/rssRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
@@ -36,7 +37,7 @@ app.use(
 );
 
 /* =========================
-   ROOT ROUTE (Render Fix)
+   ROOT ROUTE
 ========================= */
 
 app.get("/", (req, res) => {
@@ -49,7 +50,7 @@ app.get("/", (req, res) => {
 });
 
 /* =========================
-   HEALTH CHECK (Production)
+   HEALTH CHECK
 ========================= */
 
 app.get("/api/health", (req, res) => {
@@ -98,7 +99,10 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   try {
     await connectDB();
+    console.log("✅ MongoDB connected");
+
     startScheduler();
+    console.log("✅ Scheduler Running with BullMQ");
 
     const PORT = process.env.PORT || 4000;
 
@@ -106,7 +110,7 @@ const startServer = async () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("Failed to start server:", error);
+    console.error("❌ Failed to start server:", error);
     process.exit(1);
   }
 };
