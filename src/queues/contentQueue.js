@@ -1,20 +1,20 @@
 import { Queue } from "bullmq";
+import IORedis from "ioredis";
 
-let contentQueue = null;
+const connection = new IORedis(process.env.REDIS_URL, {
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+});
 
-if (process.env.REDIS_URL) {
-  const connection = {
-    url: process.env.REDIS_URL,
-    ...(process.env.REDIS_URL.startsWith("rediss://")
-      ? { tls: {} }
-      : {})
-  };
-
-  contentQueue = new Queue("contentQueue", { connection });
-
-  console.log("✅ BullMQ Queue initialized");
-} else {
-  console.log("⚠️ REDIS_URL not set — Queue disabled");
-}
-
-export { contentQueue };
+export const scrapeQueue = new Queue("scrapeQueue", {
+  connection,
+  defaultJobOptions: {
+    removeOnComplete: 50,   // keep last 50 success jobs
+    removeOnFail: 20,       // keep last 20 failed jobs
+    attempts: 3,            // retry 3 times if failed
+    backoff: {
+      type: "exponential",
+      delay: 5000,          // 5 seconds delay
+    },
+  },
+});

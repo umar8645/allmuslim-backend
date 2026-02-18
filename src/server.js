@@ -6,8 +6,10 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import compression from "compression";
 import responseTime from "response-time";
+import mongoose from "mongoose";
 
 import connectDB from "./config/db.js";
+import redis from "./config/redis.js";
 import { startScheduler } from "./jobs/scheduler.js";
 import "./workers/contentWorker.js";
 
@@ -18,88 +20,75 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import libraryRoutes from "./routes/libraryRoutes.js";
 
 dotenv.config();
-
 const app = express();
 
-/* =========================
-   GLOBAL MIDDLEWARE
-========================= */
+app.set("trust proxy", 1);
 
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(compression());
 app.use(responseTime());
-app.use(cors());
-app.use(express.json());
-app.use(morgan("dev"));
+app.use(cors({ origin: "*", credentials: true }));
+app.use(express.json({ limit: "10kb" }));
+
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
 
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 200,
-    message: "Too many requests, please try again later."
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false
   })
 );
 
-/* =========================
-   ROOT
-========================= */
-
+/* ROOT */
 app.get("/", (req, res) => {
-  res.status(200).json({
+  res.json({
     status: "success",
     message: "AllMuslim Backend is running 🚀",
-    environment: process.env.NODE_ENV || "development",
     uptime: process.uptime()
   });
 });
 
-/* =========================
-   HEALTH CHECK
-========================= */
-
+/* ENTERPRISE HEALTH */
 app.get("/api/health", (req, res) => {
-  res.status(200).json({
+  const mongoStatus =
+    mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+
+  const redisStatus =
+    redis.status === "ready" ? "connected" : "disconnected";
+
+  res.json({
     status: "OK",
     uptime: process.uptime(),
+    mongo: mongoStatus,
+    redis: redisStatus,
+    memory: process.memoryUsage().rss,
     timestamp: Date.now()
   });
 });
 
-/* =========================
-   ROUTES
-========================= */
-
+/* ROUTES */
 app.use("/api/rss", rssRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/waazi", waaziRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/library", libraryRoutes);
 
-/* =========================
-   404
-========================= */
-
+/* 404 */
 app.use((req, res) => {
-  res.status(404).json({ error: "Route not found" });
+  res.status(404).json({ message: "Route not found" });
 });
 
-/* =========================
-   GLOBAL ERROR HANDLER
-========================= */
-
+/* ERROR HANDLER */
 app.use((err, req, res, next) => {
-  console.error("❌ ERROR:", err.message);
-  res.status(err.status || 500).json({
-    error: err.message || "Internal Server Error"
-  });
+  console.error("❌ ERROR:", err);
+  res.status(500).json({ message: "Internal Server Error" });
 });
-
-/* =========================
-   START SERVER
-========================= */
 
 const PORT = process.env.PORT || 4000;
-
 let server;
 
 const startServer = async () => {
@@ -112,25 +101,32 @@ const startServer = async () => {
     });
 
   } catch (error) {
-    console.error("❌ Failed to start server:", error.message);
+    console.error("❌ Failed to start server:", error);
     process.exit(1);
   }
 };
 
-/* =========================
-   GRACEFUL SHUTDOWN
-========================= */
+/* PROCESS SAFETY */
+process.on("uncaughtException", err => {
+  console.error("UNCAUGHT EXCEPTION 💥", err);
+});
 
-const shutdown = () => {
-  console.log("🛑 Shutting down gracefully...");
+process.on("unhandledRejection", err => {
+  console.error("UNHANDLED REJECTION 💥", err);
+});
+
+/* GRACEFUL SHUTDOWN */
+const shutdown = async () => {
+  console.log("🛑 Shutting down...");
+
+  await mongoose.connection.close();
+  await redis.quit();
 
   if (server) {
     server.close(() => {
       console.log("💤 Server closed");
       process.exit(0);
     });
-  } else {
-    process.exit(0);
   }
 };
 
