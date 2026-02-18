@@ -1,34 +1,31 @@
 import cron from "node-cron";
-import { contentQueue } from "../queues/contentQueue.js";
+import { scrapeQueue } from "../queues/scrapeQueue.js";
 
 export const startScheduler = () => {
-  // Idan queue babu (Redis not configured)
-  if (!contentQueue) {
+  if (!scrapeQueue) {
     console.log("⚠️ Scheduler not started — Queue not available");
     return;
   }
 
+  // Run every 30 minutes
   cron.schedule("*/30 * * * *", async () => {
     try {
-      await contentQueue.add(
-        "update-content",
-        {},
-        {
-          attempts: 3,
-          backoff: {
-            type: "exponential",
-            delay: 5000
-          },
-          removeOnComplete: true,
-          removeOnFail: false
-        }
-      );
+      await scrapeQueue.add("update-content", {}, {
+        // Production-safe options
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 5000
+        },
+        removeOnComplete: 50,
+        removeOnFail: 20
+      });
 
-      console.log("📥 Job added to queue");
+      console.log("📥 Job added to scrapeQueue");
     } catch (error) {
       console.error("❌ Failed to add job to queue:", error.message);
     }
   });
 
-  console.log("✅ Scheduler Running with BullMQ");
+  console.log("✅ Scheduler Running with BullMQ (every 30 mins)");
 };
