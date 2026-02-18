@@ -4,8 +4,8 @@ import redis from "../config/redis.js";
 export async function getLibrary(req, res) {
   try {
     const cacheKey = "library:latest";
-    const cached = await redis.get(cacheKey);
 
+    const cached = redis ? await redis.get(cacheKey) : null;
     if (cached) {
       return res.json(JSON.parse(cached));
     }
@@ -21,7 +21,9 @@ export async function getLibrary(req, res) {
       });
     }
 
-    await redis.set(cacheKey, JSON.stringify(items), "EX", 120);
+    if (redis) {
+      await redis.set(cacheKey, JSON.stringify(items), "EX", 120);
+    }
 
     res.json(items);
   } catch (error) {

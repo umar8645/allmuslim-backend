@@ -4,10 +4,12 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
+import compression from "compression";
+import responseTime from "response-time";
 
 import connectDB from "./config/db.js";
 import { startScheduler } from "./jobs/scheduler.js";
-import "./workers/contentWorker.js"; // ✅ IMPORTANT: Start BullMQ Worker
+import "./workers/contentWorker.js";
 
 import rssRoutes from "./routes/rssRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
@@ -24,6 +26,8 @@ const app = express();
 ========================= */
 
 app.use(helmet());
+app.use(compression());
+app.use(responseTime());
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
@@ -37,7 +41,7 @@ app.use(
 );
 
 /* =========================
-   ROOT ROUTE
+   ROOT
 ========================= */
 
 app.get("/", (req, res) => {
@@ -62,7 +66,7 @@ app.get("/api/health", (req, res) => {
 });
 
 /* =========================
-   API ROUTES
+   ROUTES
 ========================= */
 
 app.use("/api/rss", rssRoutes);
@@ -72,13 +76,11 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/library", libraryRoutes);
 
 /* =========================
-   404 HANDLER
+   404
 ========================= */
 
 app.use((req, res) => {
-  res.status(404).json({
-    error: "Route not found"
-  });
+  res.status(404).json({ error: "Route not found" });
 });
 
 /* =========================
@@ -93,24 +95,24 @@ app.use((err, req, res, next) => {
 });
 
 /* =========================
-   SERVER START
+   START SERVER
 ========================= */
+
+const PORT = process.env.PORT || 4000;
+
+let server;
 
 const startServer = async () => {
   try {
     await connectDB();
-    console.log("✅ MongoDB connected");
-
     startScheduler();
-    console.log("✅ Scheduler Running with BullMQ");
 
-    const PORT = process.env.PORT || 4000;
-
-    app.listen(PORT, () => {
+    server = app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
+
   } catch (error) {
-    console.error("❌ Failed to start server:", error);
+    console.error("❌ Failed to start server:", error.message);
     process.exit(1);
   }
 };
@@ -119,14 +121,20 @@ const startServer = async () => {
    GRACEFUL SHUTDOWN
 ========================= */
 
-process.on("SIGTERM", () => {
-  console.log("🛑 SIGTERM received. Shutting down gracefully...");
-  process.exit(0);
-});
+const shutdown = () => {
+  console.log("🛑 Shutting down gracefully...");
 
-process.on("SIGINT", () => {
-  console.log("🛑 SIGINT received. Shutting down...");
-  process.exit(0);
-});
+  if (server) {
+    server.close(() => {
+      console.log("💤 Server closed");
+      process.exit(0);
+    });
+  } else {
+    process.exit(0);
+  }
+};
+
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
 
 startServer();

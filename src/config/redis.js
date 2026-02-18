@@ -9,7 +9,9 @@ if (process.env.REDIS_URL) {
   });
 
   redis.on("connect", () => console.log("✅ Redis connected"));
-  redis.on("error", (err) => console.error("Redis error:", err));
+  redis.on("error", (err) =>
+    console.error("❌ Redis error:", err.message)
+  );
 } else {
   console.log("⚠️ REDIS_URL not set — Redis disabled");
 }
