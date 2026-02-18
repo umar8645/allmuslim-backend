@@ -2,16 +2,19 @@ import cron from "node-cron";
 import { contentQueue } from "../queues/contentQueue.js";
 
 export const startScheduler = () => {
-  cron.schedule("*/10 * * * *", async () => {
-    try {
-      await contentQueue.add("rss");
-      await contentQueue.add("youtube");
-      await contentQueue.add("waazi");
-      console.log("🔄 Content jobs added to queue");
-    } catch (error) {
-      console.error("Scheduler error:", error.message);
-    }
+  cron.schedule("*/30 * * * *", async () => {
+    await contentQueue.add("update-content", {}, {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 5000
+      },
+      removeOnComplete: true,
+      removeOnFail: false
+    });
+
+    console.log("📥 Job added to queue");
   });
 
-  console.log("✅ Scheduler running");
+  console.log("✅ Scheduler Running with BullMQ");
 };

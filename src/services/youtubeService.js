@@ -1,34 +1,46 @@
 import axios from "axios";
-import Video from "../models/Video.js";
+import RSSFeed from "../models/RSSFeed.js";
+import { getApiKey, rotateKey } from "../utils/youtubeKeys.js";
 
-const apiKeys = process.env.YOUTUBE_API_KEYS.split(",");
-const channels = process.env.YOUTUBE_CHANNELS.split(",");
+export const updateYouTube = async () => {
+  const channels = process.env.YOUTUBE_CHANNELS?.split(",") || [];
 
-let index = 0;
-const getKey = () => apiKeys[index++ % apiKeys.length];
-
-export const fetchLatestVideos = async () => {
   for (const channelId of channels) {
-    const apiKey = getKey();
-
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=5&order=date&type=video&key=${apiKey}`;
-
-    const response = await axios.get(url);
-
-    for (const v of response.data.items) {
-      await Video.updateOne(
-        { videoId: v.id.videoId },
+    try {
+      const res = await axios.get(
+        "https://www.googleapis.com/youtube/v3/search",
         {
-          title: v.snippet.title,
-          videoId: v.id.videoId,
-          speaker: v.snippet.channelTitle,
-          publishedAt: v.snippet.publishedAt,
-          thumbnailUrl: v.snippet.thumbnails.high.url
-        },
-        { upsert: true }
+          params: {
+            key: getApiKey(),
+            channelId,
+            part: "snippet",
+            order: "date",
+            maxResults: 5
+          }
+        }
       );
+
+      for (const item of res.data.items) {
+        if (!item.id.videoId) continue;
+
+        await RSSFeed.updateOne(
+          { sourceUrl: `https://youtube.com/watch?v=${item.id.videoId}` },
+          {
+            title: item.snippet.title,
+            speaker: item.snippet.channelTitle,
+            dateTime: new Date(item.snippet.publishedAt),
+            sourceUrl: `https://youtube.com/watch?v=${item.id.videoId}`,
+            sourceType: "youtube",
+            mediaThumbnail: item.snippet.thumbnails.high.url
+          },
+          { upsert: true }
+        );
+      }
+
+      console.log("✅ YouTube updated:", channelId);
+    } catch (err) {
+      rotateKey();
+      console.error("❌ YouTube error:", channelId);
     }
   }
-
-  console.log("✅ YouTube updated");
 };

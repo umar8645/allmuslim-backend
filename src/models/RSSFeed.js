@@ -8,8 +8,7 @@ const RSSFeedSchema = new mongoose.Schema(
     sourceUrl: { type: String, unique: true, required: true },
     sourceType: { type: String, default: "rss" },
     mediaContent: String,
-    mediaThumbnail: String,
-    itunesImage: String
+    mediaThumbnail: String
   },
   { timestamps: true }
 );

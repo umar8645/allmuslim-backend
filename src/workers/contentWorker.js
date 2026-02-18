@@ -1,4 +1,6 @@
 import { Worker } from "bullmq";
+import { updateRSSFeeds } from "../services/rssService.js";
+import { updateYouTube } from "../services/youtubeService.js";
 
 const connection = {
   url: process.env.REDIS_URL,
@@ -10,25 +12,23 @@ const connection = {
 const worker = new Worker(
   "contentQueue",
   async (job) => {
-    if (job.name === "rss") {
+    console.log("🔄 Processing job:", job.name);
+
+    if (job.name === "update-content") {
       await updateRSSFeeds();
-    }
-
-    if (job.name === "youtube") {
-      await fetchLatestVideos();
-    }
-
-    if (job.name === "waazi") {
-      await fetchExternalWaazi();
+      await updateYouTube();
     }
   },
-  { connection }
+  {
+    connection,
+    concurrency: 2
+  }
 );
 
 worker.on("completed", (job) => {
-  console.log(`✅ Job completed: ${job.name}`);
+  console.log("✅ Job completed:", job.name);
 });
 
 worker.on("failed", (job, err) => {
-  console.error(`❌ Job failed: ${job?.name}`, err);
+  console.error("❌ Job failed:", job?.name, err.message);
 });
