@@ -1,10 +1,13 @@
-// src/services/youtubeService.js
-
 import axios from "axios";
 import RSSFeed from "../models/RSSFeed.js";
 import { getApiKey, rotateKey } from "../utils/youtubeKeys.js";
 
 export const updateYouTube = async () => {
+  if (!process.env.YOUTUBE_API_KEYS) {
+    console.warn("⚠️ YouTube disabled — No API keys");
+    return;
+  }
+
   const channels =
     process.env.YOUTUBE_CHANNELS?.split(",")
       .map((c) => c.trim())
@@ -38,10 +41,7 @@ export const updateYouTube = async () => {
         }
       );
 
-      if (!res.data?.items) {
-        console.warn("⚠️ No YouTube items returned");
-        continue;
-      }
+      if (!res.data?.items) continue;
 
       for (const item of res.data.items) {
         if (!item.id?.videoId) continue;
@@ -63,13 +63,13 @@ export const updateYouTube = async () => {
       }
 
       console.log("✅ YouTube updated:", channelId);
+
     } catch (err) {
       console.error(
         `❌ YouTube error for ${channelId}:`,
         err.response?.data || err.message
       );
 
-      // Rotate API key on quota or failure
       rotateKey();
     }
   }

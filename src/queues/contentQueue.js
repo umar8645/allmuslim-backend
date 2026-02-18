@@ -1,12 +1,20 @@
 import { Queue } from "bullmq";
 
-const connection = {
-  url: process.env.REDIS_URL,
-  ...(process.env.REDIS_URL?.startsWith("rediss://")
-    ? { tls: {} }
-    : {})
-};
+let contentQueue = null;
 
-export const contentQueue = new Queue("contentQueue", {
-  connection
-});
+if (process.env.REDIS_URL) {
+  const connection = {
+    url: process.env.REDIS_URL,
+    ...(process.env.REDIS_URL.startsWith("rediss://")
+      ? { tls: {} }
+      : {})
+  };
+
+  contentQueue = new Queue("contentQueue", { connection });
+
+  console.log("✅ BullMQ Queue initialized");
+} else {
+  console.log("⚠️ REDIS_URL not set — Queue disabled");
+}
+
+export { contentQueue };

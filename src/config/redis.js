@@ -1,11 +1,17 @@
 import Redis from "ioredis";
 
-const redis = new Redis(process.env.REDIS_URL, {
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
-});
+let redis = null;
 
-redis.on("connect", () => console.log("✅ Redis connected"));
-redis.on("error", (err) => console.error("Redis error:", err));
+if (process.env.REDIS_URL) {
+  redis = new Redis(process.env.REDIS_URL, {
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false,
+  });
+
+  redis.on("connect", () => console.log("✅ Redis connected"));
+  redis.on("error", (err) => console.error("Redis error:", err));
+} else {
+  console.log("⚠️ REDIS_URL not set — Redis disabled");
+}
 
 export default redis;
