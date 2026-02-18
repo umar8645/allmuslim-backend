@@ -9,7 +9,9 @@ export async function getVideos(req, res) {
     const cacheKey = `videos:${page}:${limit}`;
     const cached = await redis.get(cacheKey);
 
-    if (cached) return res.json(JSON.parse(cached));
+    if (cached) {
+      return res.json(JSON.parse(cached));
+    }
 
     const videos = await Video.find()
       .sort({ publishedAt: -1 })
@@ -17,20 +19,41 @@ export async function getVideos(req, res) {
       .limit(limit)
       .lean();
 
+    if (!videos.length) {
+      return res.status(503).json({
+        error: "No videos available yet."
+      });
+    }
+
     await redis.set(cacheKey, JSON.stringify(videos), "EX", 60);
 
     res.json(videos);
-  } catch {
+  } catch (error) {
+    console.error("Video Error:", error.message);
     res.status(500).json({ error: "Failed to fetch videos" });
   }
 }
 
 export async function getVideoById(req, res) {
   try {
+    const cacheKey = `video:${req.params.id}`;
+    const cached = await redis.get(cacheKey);
+
+    if (cached) {
+      return res.json(JSON.parse(cached));
+    }
+
     const video = await Video.findOne({ videoId: req.params.id }).lean();
-    if (!video) return res.status(404).json({ error: "Not found" });
+
+    if (!video) {
+      return res.status(404).json({ error: "Video not found" });
+    }
+
+    await redis.set(cacheKey, JSON.stringify(video), "EX", 300);
+
     res.json(video);
-  } catch {
+  } catch (error) {
+    console.error("Single Video Error:", error.message);
     res.status(500).json({ error: "Server error" });
   }
 }

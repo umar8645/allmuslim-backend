@@ -1,6 +1,12 @@
 import { Queue } from "bullmq";
-import redis from "../config/redis.js";
+
+const connection = {
+  url: process.env.REDIS_URL,
+  ...(process.env.REDIS_URL?.startsWith("rediss://")
+    ? { tls: {} }
+    : {})
+};
 
 export const contentQueue = new Queue("contentQueue", {
-  connection: redis,
+  connection
 });

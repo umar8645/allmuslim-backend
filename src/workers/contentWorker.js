@@ -1,9 +1,11 @@
 import { Worker } from "bullmq";
-import redis from "../config/redis.js";
 
-import { updateRSSFeeds } from "../services/rssService.js";
-import { fetchLatestVideos } from "../services/youtubeService.js";
-import { fetchExternalWaazi } from "../services/waaziApiService.js";
+const connection = {
+  url: process.env.REDIS_URL,
+  ...(process.env.REDIS_URL?.startsWith("rediss://")
+    ? { tls: {} }
+    : {})
+};
 
 const worker = new Worker(
   "contentQueue",
@@ -20,7 +22,7 @@ const worker = new Worker(
       await fetchExternalWaazi();
     }
   },
-  { connection: redis }
+  { connection }
 );
 
 worker.on("completed", (job) => {
@@ -28,5 +30,5 @@ worker.on("completed", (job) => {
 });
 
 worker.on("failed", (job, err) => {
-  console.error(`❌ Job failed: ${job.name}`, err);
+  console.error(`❌ Job failed: ${job?.name}`, err);
 });
