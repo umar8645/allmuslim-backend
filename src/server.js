@@ -21,10 +21,10 @@ import libraryRoutes from "./routes/libraryRoutes.js";
 dotenv.config();
 const app = express();
 
-/* TRUST PROXY (Render/Production safe) */
+/* TRUST PROXY (Render Safe) */
 app.set("trust proxy", 1);
 
-/* SECURITY + PERFORMANCE MIDDLEWARE */
+/* SECURITY + PERFORMANCE */
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(compression());
 app.use(responseTime());
@@ -98,15 +98,23 @@ let server;
 const startServer = async () => {
   try {
     await connectDB();
+    console.log("🗄 MongoDB Connected");
 
-    // Redis Conditional Startup
     if (process.env.REDIS_URL) {
       console.log("🟢 Redis detected — starting workers & scheduler");
 
-      // dynamic import to prevent crash if Redis missing
+      // Start Worker
       await import("./workers/contentWorker.js");
+      console.log("👷 Worker started");
 
+      // Start Scheduler
       startScheduler();
+      console.log("⏰ Scheduler started");
+
+      // 🔥 INITIAL SCRAPE (IMPORTANT)
+      const { scrapeQueue } = await import("./queues/scrapeQueue.js");
+      await scrapeQueue.add("initial-run", {});
+      console.log("⚡ Initial scrape triggered");
     } else {
       console.log("⚠️ REDIS_URL not set — Workers & Scheduler disabled");
     }
