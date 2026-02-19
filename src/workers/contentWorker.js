@@ -3,7 +3,7 @@ import redis from "../config/redis.js";
 
 import { updateYouTube } from "../services/youtubeService.js";
 import { updateRSSFeeds } from "../services/rssService.js";
-import { fetchExternalWaazi } from "../services/waaziService.js";
+import { fetchExternalWaazi } from "../services/waaziApiService.js"; // ✅ FIXED HERE
 
 const worker = new Worker(
   "scrapeQueue",
