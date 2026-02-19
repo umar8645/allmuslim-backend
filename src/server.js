@@ -12,19 +12,22 @@ import connectDB from "./config/db.js";
 import redis from "./config/redis.js";
 import { startScheduler } from "./jobs/scheduler.js";
 
-import rssRoutes from "./routes/rssRoutes.js";
-import videoRoutes from "./routes/videoRoutes.js";
+/* 🔥 UNIFIED ROUTES */
+import feedRoutes from "./routes/feedRoutes.js";
 import waaziRoutes from "./routes/waaziRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
-import libraryRoutes from "./routes/libraryRoutes.js";
 
 dotenv.config();
 const app = express();
 
-/* TRUST PROXY (Render Safe) */
+/* =============================
+   TRUST PROXY (Render Safe)
+============================= */
 app.set("trust proxy", 1);
 
-/* SECURITY + PERFORMANCE */
+/* =============================
+   SECURITY + PERFORMANCE
+============================= */
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(compression());
 app.use(responseTime());
@@ -38,25 +41,31 @@ if (process.env.NODE_ENV === "development") {
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 300,
+    max: 500,
     standardHeaders: true,
     legacyHeaders: false,
   })
 );
 
-/* ROOT */
+/* =============================
+   ROOT
+============================= */
 app.get("/", (req, res) => {
   res.json({
     status: "success",
-    message: "AllMuslim Backend is running 🚀",
+    message: "AllMuslim Aggregator Engine 🚀",
     uptime: process.uptime(),
   });
 });
 
-/* HEALTH CHECK */
-app.get("/api/health", (req, res) => {
+/* =============================
+   HEALTH CHECK
+============================= */
+app.get("/api/health", async (req, res) => {
   const mongoStatus =
-    mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+    mongoose.connection.readyState === 1
+      ? "connected"
+      : "disconnected";
 
   const redisStatus =
     process.env.REDIS_URL && redis?.status === "ready"
@@ -68,33 +77,47 @@ app.get("/api/health", (req, res) => {
     uptime: process.uptime(),
     mongo: mongoStatus,
     redis: redisStatus,
-    memory: process.memoryUsage().rss,
+    memoryMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
     timestamp: Date.now(),
   });
 });
 
-/* ROUTES */
-app.use("/api/rss", rssRoutes);
-app.use("/api/videos", videoRoutes);
+/* =============================
+   API ROUTES
+============================= */
+
+/* 🔥 Unified Feed */
+app.use("/api/feed", feedRoutes);
+
+/* Optional specific filters */
 app.use("/api/waazi", waaziRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/library", libraryRoutes);
 
-/* 404 */
+/* =============================
+   404 HANDLER
+============================= */
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-/* ERROR HANDLER */
+/* =============================
+   GLOBAL ERROR HANDLER
+============================= */
 app.use((err, req, res, next) => {
   console.error("❌ ERROR:", err);
-  res.status(500).json({ message: "Internal Server Error" });
+  res.status(500).json({
+    status: "error",
+    message: "Internal Server Error",
+  });
 });
+
+/* =============================
+   SERVER START
+============================= */
 
 const PORT = process.env.PORT || 4000;
 let server;
 
-/* START SERVER */
 const startServer = async () => {
   try {
     await connectDB();
@@ -103,20 +126,18 @@ const startServer = async () => {
     if (process.env.REDIS_URL) {
       console.log("🟢 Redis detected — starting workers & scheduler");
 
-      // Start Worker
       await import("./workers/contentWorker.js");
       console.log("👷 Worker started");
 
-      // Start Scheduler
       startScheduler();
       console.log("⏰ Scheduler started");
 
-      // 🔥 INITIAL SCRAPE (IMPORTANT)
       const { scrapeQueue } = await import("./queues/scrapeQueue.js");
       await scrapeQueue.add("initial-run", {});
       console.log("⚡ Initial scrape triggered");
+
     } else {
-      console.log("⚠️ REDIS_URL not set — Workers & Scheduler disabled");
+      console.log("⚠️ REDIS_URL not set — Workers disabled");
     }
 
     server = app.listen(PORT, () => {
@@ -129,7 +150,10 @@ const startServer = async () => {
   }
 };
 
-/* PROCESS SAFETY */
+/* =============================
+   PROCESS SAFETY
+============================= */
+
 process.on("uncaughtException", (err) => {
   console.error("UNCAUGHT EXCEPTION 💥", err);
 });
@@ -138,7 +162,10 @@ process.on("unhandledRejection", (err) => {
   console.error("UNHANDLED REJECTION 💥", err);
 });
 
-/* GRACEFUL SHUTDOWN */
+/* =============================
+   GRACEFUL SHUTDOWN
+============================= */
+
 const shutdown = async () => {
   console.log("🛑 Shutting down...");
 
