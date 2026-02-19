@@ -7,28 +7,51 @@ import { fetchExternalWaazi } from "../services/waaziService.js";
 
 const worker = new Worker(
   "scrapeQueue",
-  async job => {
+  async (job) => {
     console.log("🚀 Processing job:", job.id);
 
-    // AUTO SCRAPING LOGIC
-    await updateYouTube();
-    await updateRSSFeeds();
-    await fetchExternalWaazi();
+    try {
+      // YouTube
+      console.log("▶ Updating YouTube...");
+      await updateYouTube();
 
-    console.log("✅ Scraping completed");
+      // RSS
+      console.log("📰 Updating RSS Feeds...");
+      await updateRSSFeeds();
 
-    return { success: true };
+      // Waazi
+      console.log("🎙 Updating External Waazi...");
+      await fetchExternalWaazi();
+
+      console.log("✅ Scraping completed successfully");
+      return { success: true };
+
+    } catch (error) {
+      console.error("❌ Scraping error:", error.message);
+      throw error; // BullMQ zai mark job as failed
+    }
   },
   {
     connection: redis,
-    concurrency: 3
+    concurrency: 3,
   }
 );
 
-worker.on("completed", job => {
+/* EVENTS */
+worker.on("ready", () => {
+  console.log("👷 Worker is ready");
+});
+
+worker.on("completed", (job) => {
   console.log(`✅ Job ${job.id} completed`);
 });
 
 worker.on("failed", (job, err) => {
   console.error(`❌ Job ${job?.id} failed:`, err.message);
 });
+
+worker.on("error", (err) => {
+  console.error("🚨 Worker error:", err);
+});
+
+export default worker;
