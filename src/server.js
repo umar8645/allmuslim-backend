@@ -11,7 +11,6 @@ import mongoose from "mongoose";
 import connectDB from "./config/db.js";
 import redis from "./config/redis.js";
 import { startScheduler } from "./jobs/scheduler.js";
-import "./workers/contentWorker.js";
 
 import rssRoutes from "./routes/rssRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
@@ -22,8 +21,10 @@ import libraryRoutes from "./routes/libraryRoutes.js";
 dotenv.config();
 const app = express();
 
+/* TRUST PROXY (Render/Production safe) */
 app.set("trust proxy", 1);
 
+/* SECURITY + PERFORMANCE MIDDLEWARE */
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(compression());
 app.use(responseTime());
@@ -39,7 +40,7 @@ app.use(
     windowMs: 15 * 60 * 1000,
     max: 300,
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
   })
 );
 
@@ -48,17 +49,19 @@ app.get("/", (req, res) => {
   res.json({
     status: "success",
     message: "AllMuslim Backend is running 🚀",
-    uptime: process.uptime()
+    uptime: process.uptime(),
   });
 });
 
-/* ENTERPRISE HEALTH */
+/* HEALTH CHECK */
 app.get("/api/health", (req, res) => {
   const mongoStatus =
     mongoose.connection.readyState === 1 ? "connected" : "disconnected";
 
   const redisStatus =
-    redis.status === "ready" ? "connected" : "disconnected";
+    process.env.REDIS_URL && redis?.status === "ready"
+      ? "connected"
+      : "disabled";
 
   res.json({
     status: "OK",
@@ -66,7 +69,7 @@ app.get("/api/health", (req, res) => {
     mongo: mongoStatus,
     redis: redisStatus,
     memory: process.memoryUsage().rss,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
 });
 
@@ -91,10 +94,22 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 4000;
 let server;
 
+/* START SERVER */
 const startServer = async () => {
   try {
     await connectDB();
-    startScheduler();
+
+    // Redis Conditional Startup
+    if (process.env.REDIS_URL) {
+      console.log("🟢 Redis detected — starting workers & scheduler");
+
+      // dynamic import to prevent crash if Redis missing
+      await import("./workers/contentWorker.js");
+
+      startScheduler();
+    } else {
+      console.log("⚠️ REDIS_URL not set — Workers & Scheduler disabled");
+    }
 
     server = app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
@@ -107,11 +122,11 @@ const startServer = async () => {
 };
 
 /* PROCESS SAFETY */
-process.on("uncaughtException", err => {
+process.on("uncaughtException", (err) => {
   console.error("UNCAUGHT EXCEPTION 💥", err);
 });
 
-process.on("unhandledRejection", err => {
+process.on("unhandledRejection", (err) => {
   console.error("UNHANDLED REJECTION 💥", err);
 });
 
@@ -119,14 +134,24 @@ process.on("unhandledRejection", err => {
 const shutdown = async () => {
   console.log("🛑 Shutting down...");
 
-  await mongoose.connection.close();
-  await redis.quit();
+  try {
+    await mongoose.connection.close();
+    console.log("🗄 MongoDB closed");
 
-  if (server) {
-    server.close(() => {
-      console.log("💤 Server closed");
-      process.exit(0);
-    });
+    if (process.env.REDIS_URL && redis) {
+      await redis.quit();
+      console.log("🧠 Redis closed");
+    }
+
+    if (server) {
+      server.close(() => {
+        console.log("💤 Server closed");
+        process.exit(0);
+      });
+    }
+  } catch (err) {
+    console.error("Shutdown error:", err);
+    process.exit(1);
   }
 };
 
