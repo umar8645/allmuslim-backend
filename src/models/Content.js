@@ -1,16 +1,25 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const ContentSchema = new mongoose.Schema(
   {
-    title: String,
+    title: { type: String, required: true },
+    description: String,
     speaker: String,
+    sourceType: {
+      type: String,
+      enum: ["youtube", "rss", "external"],
+      required: true,
+    },
+    sourceId: String,
+    url: String,
+    thumbnail: String,
+    publishedAt: Date,
     dateTime: Date,
     location: String,
-    sourceUrl: String,
-    mediaThumbnail: String,
-    sourceType: String
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Content", ContentSchema, "contents");
+const Content = mongoose.model("Content", ContentSchema);
+
+export default Content;
