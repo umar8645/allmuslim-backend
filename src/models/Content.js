@@ -1,37 +1,16 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
-const contentSchema = new mongoose.Schema(
+const ContentSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true },
+    title: String,
     speaker: String,
-
-    sourceType: {
-      type: String,
-      enum: ["youtube", "rss", "waazi"],
-      required: true,
-      index: true
-    },
-
-    sourceUrl: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true
-    },
-
+    dateTime: Date,
+    location: String,
+    sourceUrl: String,
     mediaThumbnail: String,
-    mediaContent: String,
-
-    dateTime: {
-      type: Date,
-      required: true,
-      index: true
-    }
+    sourceType: String
   },
   { timestamps: true }
 );
 
-// 🔥 compound index for feed performance
-contentSchema.index({ sourceType: 1, dateTime: -1 });
-
-export default mongoose.model("Content", contentSchema);
+module.exports = mongoose.model("Content", ContentSchema, "contents");

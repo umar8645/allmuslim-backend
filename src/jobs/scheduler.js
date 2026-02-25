@@ -1,31 +1,16 @@
 import cron from "node-cron";
-import { scrapeQueue } from "../queues/scrapeQueue.js";
+import { updateRSSFeeds } from "../services/rssService.js";
+import { fetchLatestVideos } from "../services/youtubeService.js";
+import { fetchExternalWaazi } from "../services/waaziApiService.js";
 
 export const startScheduler = () => {
-  if (!scrapeQueue) {
-    console.log("⚠️ Scheduler not started — Queue not available");
-    return;
-  }
+  cron.schedule("0 * * * *", async () => {
+    console.log("Running scheduled jobs...");
 
-  // Run every 30 minutes
-  cron.schedule("*/30 * * * *", async () => {
-    try {
-      await scrapeQueue.add("update-content", {}, {
-        // Production-safe options
-        attempts: 3,
-        backoff: {
-          type: "exponential",
-          delay: 5000
-        },
-        removeOnComplete: 50,
-        removeOnFail: 20
-      });
+    await updateRSSFeeds();
+    await fetchLatestVideos();
+    await fetchExternalWaazi();
 
-      console.log("📥 Job added to scrapeQueue");
-    } catch (error) {
-      console.error("❌ Failed to add job to queue:", error.message);
-    }
+    console.log("Scheduled jobs finished");
   });
-
-  console.log("✅ Scheduler Running with BullMQ (every 30 mins)");
 };
