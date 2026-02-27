@@ -25,17 +25,22 @@ dotenv.config();
 
 const app = express();
 
-/* PATH FIX */
+/* ================= PATH FIX ================= */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/* SECURITY */
+/* ================= TRUST PROXY (GYARA) ================= */
+app.set("trust proxy", 1); // ✅ MUHIMMI – DON RENDER
+
+/* ================= SECURITY ================= */
 app.use(helmet());
 
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 200,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
   })
 );
 
@@ -43,7 +48,7 @@ app.use(morgan("dev"));
 app.use(cors());
 app.use(express.json());
 
-/* FIREBASE */
+/* ================= FIREBASE ================= */
 const serviceAccountPath = path.join(
   __dirname,
   "config",
@@ -62,27 +67,32 @@ if (fs.existsSync(serviceAccountPath)) {
   }
 }
 
-/* HEALTH CHECK */
+/* ================= HEALTH ================= */
 app.get("/health", (req, res) => {
   res.json({ status: "OK" });
 });
 
-/* ROUTES */
+/* ================= ROUTES ================= */
 app.use("/api/rss", rssRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/waazi", waaziRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/library", libraryRoutes);
 
-/* GLOBAL ERROR HANDLER */
+/* ================= 404 ================= */
+app.use((req, res) => {
+  res.status(404).json({ error: "Route not found" });
+});
+
+/* ================= ERROR ================= */
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: "Server error" });
 });
 
-/* START SERVER */
+/* ================= START ================= */
 const start = async () => {
-  await connectDB();        // ✅ yanzu yana aiki
+  await connectDB();
   startScheduler();
 
   const PORT = process.env.PORT || 4000;

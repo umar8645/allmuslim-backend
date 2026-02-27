@@ -3,16 +3,15 @@ import mongoose from "mongoose";
 const ContentSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
-    description: String,
     speaker: String,
     sourceType: {
       type: String,
       enum: ["youtube", "rss", "external"],
       required: true,
     },
-    sourceId: String,
-    url: String,
-    thumbnail: String,
+    sourceUrl: String,
+    mediaThumbnail: String,
+    mediaContent: String,
     publishedAt: Date,
     dateTime: Date,
     location: String,
@@ -20,6 +19,4 @@ const ContentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Content = mongoose.model("Content", ContentSchema);
-
-export default Content;
+export default mongoose.model("Content", ContentSchema);

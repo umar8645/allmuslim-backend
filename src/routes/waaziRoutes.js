@@ -1,4 +1,3 @@
-// src/routes/waaziRoutes.js
 import express from "express";
 import {
   getAllWaazi,
@@ -7,10 +6,10 @@ import {
 
 const router = express.Router();
 
-// GET /api/waazi
+// Android → GET /api/waazi
 router.get("/", getAllWaazi);
 
-// GET /api/waazi/upcoming
+// Optional
 router.get("/upcoming", getUpcomingWaazi);
 
 export default router;
