@@ -1,12 +1,13 @@
-import Notification from "../models/Notification.js";
+import Content from "../models/Content.js";
 
 export async function getNotifications(req, res) {
   try {
-    const notes = await Notification.find()
+    const items = await Content.find({ type: "notification" })
       .sort({ createdAt: -1 })
-      .limit(100);
-    res.json(notes);
-  } catch {
+      .limit(50);
+
+    res.json(items);
+  } catch (err) {
     res.status(500).json({ error: "Failed to fetch notifications" });
   }
 }

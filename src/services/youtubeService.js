@@ -1,4 +1,5 @@
 import axios from "axios";
+import Content from "../models/Content.js";
 
 const apiKeys = process.env.YOUTUBE_API_KEYS
   ? process.env.YOUTUBE_API_KEYS.split(",")
@@ -27,13 +28,42 @@ export const fetchLatestVideos = async () => {
       try {
         const apiKey = getApiKey();
 
-        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=5&order=date&type=video&key=${apiKey}`;
+        const url =
+          `https://www.googleapis.com/youtube/v3/search` +
+          `?part=snippet&channelId=${channelId}` +
+          `&maxResults=5&order=date&type=video&key=${apiKey}`;
 
         const response = await axios.get(url);
 
-        console.log(`YouTube videos fetched for channel ${channelId}`);
+        const items = response.data.items || [];
+
+        for (const item of items) {
+          const videoId = item.id?.videoId;
+          if (!videoId) continue;
+
+          const videoUrl = `https://youtube.com/watch?v=${videoId}`;
+
+          await Content.findOneAndUpdate(
+            { url: videoUrl },
+            {
+              title: item.snippet.title,
+              description: item.snippet.description,
+              url: videoUrl,
+              thumbnail: item.snippet.thumbnails?.high?.url,
+              source: "youtube",
+              type: "youtube",
+              publishedAt: new Date(item.snippet.publishedAt),
+            },
+            { upsert: true, new: true }
+          );
+        }
+
+        console.log(`YouTube videos saved for channel ${channelId}`);
       } catch (err) {
-        console.error("YouTube fetch error:", err.message);
+        console.error(
+          `YouTube fetch error (${channelId}):`,
+          err.response?.data?.error?.message || err.message
+        );
       }
     }
   } catch (error) {

@@ -2,19 +2,19 @@ import mongoose from "mongoose";
 
 const ContentSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true },
-    speaker: String,
-    sourceType: {
+    title: String,
+    description: String,
+    url: { type: String, required: true },
+    thumbnail: String,
+    source: String,
+
+    type: {
       type: String,
-      enum: ["youtube", "rss", "external"],
+      enum: ["waazi", "rss", "youtube", "notification"],
       required: true,
     },
-    sourceUrl: String,
-    mediaThumbnail: String,
-    mediaContent: String,
+
     publishedAt: Date,
-    dateTime: Date,
-    location: String,
   },
   { timestamps: true }
 );
