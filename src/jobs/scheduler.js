@@ -4,13 +4,30 @@ import { fetchLatestVideos } from "../services/youtubeService.js";
 import { fetchExternalWaazi } from "../services/waaziApiService.js";
 
 export const startScheduler = () => {
-  cron.schedule("0 * * * *", async () => {
-    console.log("Running scheduled jobs...");
 
-    await updateRSSFeeds();
-    await fetchLatestVideos();
-    await fetchExternalWaazi();
+  console.log("✅ Scheduler started");
 
-    console.log("Scheduled jobs finished");
+  // run every 2 minutes
+  cron.schedule("*/2 * * * *", async () => {
+
+    try {
+
+      console.log("⏳ Running scheduled jobs...");
+
+      await updateRSSFeeds();
+
+      await fetchLatestVideos();
+
+      await fetchExternalWaazi();
+
+      console.log("✅ Scheduled jobs finished");
+
+    } catch (err) {
+
+      console.error("❌ Scheduler error:", err.message);
+
+    }
+
   });
+
 };

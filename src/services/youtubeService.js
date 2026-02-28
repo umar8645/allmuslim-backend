@@ -1,5 +1,5 @@
 import axios from "axios";
-import Content from "../models/Content.js";
+import Video from "../models/Video.js";
 
 const apiKeys = process.env.YOUTUBE_API_KEYS
   ? process.env.YOUTUBE_API_KEYS.split(",")
@@ -12,61 +12,91 @@ const channels = process.env.YOUTUBE_CHANNELS
 let keyIndex = 0;
 
 const getApiKey = () => {
+
   const key = apiKeys[keyIndex];
+
   keyIndex = (keyIndex + 1) % apiKeys.length;
+
   return key;
+
 };
 
 export const fetchLatestVideos = async () => {
+
   try {
+
     if (apiKeys.length === 0 || channels.length === 0) {
-      console.log("YouTube keys or channels missing");
+
+      console.log("YouTube config missing");
       return;
+
     }
 
     for (const channelId of channels) {
+
       try {
+
         const apiKey = getApiKey();
 
         const url =
           `https://www.googleapis.com/youtube/v3/search` +
-          `?part=snippet&channelId=${channelId}` +
-          `&maxResults=5&order=date&type=video&key=${apiKey}`;
+          `?part=snippet` +
+          `&channelId=${channelId}` +
+          `&maxResults=5` +
+          `&order=date` +
+          `&type=video` +
+          `&key=${apiKey}`;
 
-        const response = await axios.get(url);
+        const res = await axios.get(url);
 
-        const items = response.data.items || [];
+        const items = res.data.items || [];
 
         for (const item of items) {
-          const videoId = item.id?.videoId;
+
+          const videoId = item.id.videoId;
+
           if (!videoId) continue;
 
-          const videoUrl = `https://youtube.com/watch?v=${videoId}`;
+          await Video.findOneAndUpdate(
 
-          await Content.findOneAndUpdate(
-            { url: videoUrl },
+            { videoId },
+
             {
               title: item.snippet.title,
-              description: item.snippet.description,
-              url: videoUrl,
-              thumbnail: item.snippet.thumbnails?.high?.url,
-              source: "youtube",
-              type: "youtube",
-              publishedAt: new Date(item.snippet.publishedAt),
+              videoId,
+
+              speaker: item.snippet.channelTitle,
+
+              publishedAt:
+                new Date(item.snippet.publishedAt),
+
+              thumbnailUrl:
+                item.snippet.thumbnails.high.url,
+
+              source: "youtube"
+
             },
-            { upsert: true, new: true }
+
+            { upsert: true }
+
           );
+
         }
 
-        console.log(`YouTube videos saved for channel ${channelId}`);
+        console.log("YouTube saved:", channelId);
+
       } catch (err) {
-        console.error(
-          `YouTube fetch error (${channelId}):`,
-          err.response?.data?.error?.message || err.message
-        );
+
+        console.error("YouTube error:", err.message);
+
       }
+
     }
+
   } catch (error) {
+
     console.error("YouTube service error:", error.message);
+
   }
+
 };
