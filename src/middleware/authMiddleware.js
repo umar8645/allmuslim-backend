@@ -1,21 +1,24 @@
-import jwt from "jsonwebtoken";
-import User from "../models/User.js";
+import AuditLog from "../models/AuditLog.js";
 
-export const protect = async (req, res, next) => {
-  let token;
+export const logAction = (actionType) => {
+  return async (req, res, next) => {
+    try {
+      const adminId = req.user._id;
+      const ip = req.ip || req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+      const device = req.headers["user-agent"] || "unknown";
 
-  if (req.headers.authorization?.startsWith("Bearer")) {
-    token = req.headers.authorization.split(" ")[1];
-  }
+      await AuditLog.create({
+        admin: adminId,
+        action: actionType,
+        targetUser: req.params.id || null,
+        ip,
+        device
+      });
 
-  if (!token)
-    return res.status(401).json({ message: "Not authorized" });
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id).select("-password");
-    next();
-  } catch {
-    res.status(401).json({ message: "Invalid token" });
-  }
+      next();
+    } catch (err) {
+      console.error("Audit log error:", err.message);
+      next();
+    }
+  };
 };
