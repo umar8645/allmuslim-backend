@@ -27,8 +27,10 @@
     "mongoose": "^8.5.1",
     "morgan": "^1.10.0",
     "node-cron": "^3.0.3",
+    "qrcode": "^1.5.4",
     "response-time": "^2.3.2",
-    "rss-parser": "^3.13.0"
+    "rss-parser": "^3.13.0",
+    "speakeasy": "^2.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"
