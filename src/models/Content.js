@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 
 const ContentSchema = new mongoose.Schema(
   {
-    title: String,
+    title: { type: String, trim: true },
     description: String,
-    url: { type: String, required: true },
+    url: { type: String, required: true, index: true },
     thumbnail: String,
     source: String,
 
@@ -12,9 +12,10 @@ const ContentSchema = new mongoose.Schema(
       type: String,
       enum: ["waazi", "rss", "youtube", "notification"],
       required: true,
+      index: true
     },
 
-    publishedAt: Date,
+    dateTime: { type: Date, index: true }
   },
   { timestamps: true }
 );
