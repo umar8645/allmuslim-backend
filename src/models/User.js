@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      select: false
+      select: false // kada a dawo da password a queries
     },
 
     role: {
@@ -29,16 +29,16 @@ const userSchema = new mongoose.Schema(
       default: "editor"
     },
 
-    // 🔐 refresh token (JWT refresh)
+    // 🔐 Refresh token (JWT refresh)
     refreshToken: {
       type: String,
-      select: false
+      select: false // sensitive
     },
 
-    // 🔒 advanced security (za mu yi amfani da su daga baya)
-    lastLoginAt: Date,
-    lastLoginIp: String,
-    device: String
+    // 🔒 Advanced security (IP lock, device tracking)
+    lastLoginAt: Date,   // lokacin karshe da user ya shiga
+    lastLoginIp: String, // IP da ya shiga
+    device: String       // device/browser info
   },
   { timestamps: true }
 );
@@ -62,6 +62,18 @@ userSchema.pre("save", async function (next) {
  */
 userSchema.methods.comparePassword = function (password) {
   return bcrypt.compare(password, this.password);
+};
+
+/**
+ * =====================
+ * UPDATE LOGIN INFO
+ * =====================
+ */
+userSchema.methods.updateLoginInfo = async function (ip, device) {
+  this.lastLoginAt = new Date();
+  this.lastLoginIp = ip;
+  this.device = device;
+  await this.save();
 };
 
 export default mongoose.model("User", userSchema);
