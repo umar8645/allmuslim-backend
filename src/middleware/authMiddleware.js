@@ -1,24 +1,26 @@
-import AuditLog from "../models/AuditLog.js";
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 
-export const logAction = (actionType) => {
-  return async (req, res, next) => {
-    try {
-      const adminId = req.user._id;
-      const ip = req.ip || req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-      const device = req.headers["user-agent"] || "unknown";
+// middleware to protect routes
+export const protect = async (req, res, next) => {
+  let token;
 
-      await AuditLog.create({
-        admin: adminId,
-        action: actionType,
-        targetUser: req.params.id || null,
-        ip,
-        device
-      });
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
 
-      next();
-    } catch (err) {
-      console.error("Audit log error:", err.message);
-      next();
-    }
-  };
+  if (!token) {
+    return res.status(401).json({ message: "Not authorized, no token" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id).select("-password -refreshToken");
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: "Not authorized, token failed" });
+  }
 };
