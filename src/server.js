@@ -8,8 +8,6 @@ import rateLimit from "express-rate-limit";
 import connectDB from "./config/db.js";
 
 // ROUTES
-import authRoutes from "./routes/authRoutes.js";
-import adminRoutes from "./routes/adminRoutes.js";
 import rssRoutes from "./routes/rssRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
 import waaziRoutes from "./routes/waaziRoutes.js";
