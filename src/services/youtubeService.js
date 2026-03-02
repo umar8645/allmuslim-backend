@@ -13,67 +13,71 @@ const channels = (process.env.YOUTUBE_CHANNELS || "")
 
 let keyIndex = 0;
 
-const getApiKey = () => {
-  if (apiKeys.length === 0) return null;
-  const key = apiKeys[keyIndex];
+const getApiKey = () => apiKeys[keyIndex];
+
+const rotateKey = () => {
   keyIndex = (keyIndex + 1) % apiKeys.length;
-  return key;
+  console.warn("🔄 Switched to next YouTube API key");
 };
 
 export const fetchLatestVideos = async () => {
-  if (apiKeys.length === 0 || channels.length === 0) {
+  if (!apiKeys.length || !channels.length) {
     console.log("⚠️ YouTube config missing");
     return;
   }
 
   for (const channelId of channels) {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      console.log("⚠️ No YouTube API key available");
-      return;
-    }
+    let attempts = 0;
 
-    const url =
-      "https://www.googleapis.com/youtube/v3/search" +
-      `?part=snippet` +
-      `&channelId=${channelId}` +
-      `&maxResults=5` +
-      `&order=date` +
-      `&type=video` +
-      `&key=${apiKey}`;
+    while (attempts < apiKeys.length) {
+      const apiKey = getApiKey();
 
-    try {
-      const res = await axios.get(url, { timeout: 15000 });
-      const items = res.data?.items || [];
-
-      if (items.length === 0) {
-        console.log("⚠️ No videos for channel:", channelId);
-        continue;
-      }
-
-      for (const item of items) {
-        const videoId = item?.id?.videoId;
-        if (!videoId) continue;
-
-        await Video.updateOne(
-          { videoId },
+      try {
+        const res = await axios.get(
+          "https://www.googleapis.com/youtube/v3/search",
           {
-            title: item.snippet?.title || "Untitled",
-            videoId,
-            speaker: item.snippet?.channelTitle || "Unknown",
-            publishedAt: new Date(item.snippet?.publishedAt),
-            thumbnailUrl: item.snippet?.thumbnails?.high?.url,
-            source: "youtube"
-          },
-          { upsert: true }
+            params: {
+              part: "snippet",
+              channelId,
+              maxResults: 5,
+              order: "date",
+              type: "video",
+              key: apiKey
+            },
+            timeout: 15000
+          }
         );
+
+        for (const item of res.data.items || []) {
+          if (!item.id?.videoId) continue;
+
+          await Video.updateOne(
+            { videoId: item.id.videoId },
+            {
+              title: item.snippet.title,
+              speaker: item.snippet.channelTitle,
+              publishedAt: new Date(item.snippet.publishedAt),
+              thumbnailUrl: item.snippet.thumbnails?.high?.url,
+              source: "youtube"
+            },
+            { upsert: true }
+          );
+        }
+
+        console.log("✅ YouTube saved:", channelId);
+        break; // 🟢 nasara → fita daga while
+      } catch (err) {
+        const status = err.response?.status;
+
+        if ([400, 403, 429].includes(status)) {
+          rotateKey();
+          attempts++;
+          continue;
+        }
+
+        console.log("⚠️ YouTube error:", err.message);
+        break;
       }
-
-      console.log("✅ YouTube saved:", channelId);
-
-    } catch (err) {
-      // 400 / 403 / quota / invalid channel → SKIP ONLY
-      console.log("⚠️ YouTube skipped:", channelId);
     }
   }
 };

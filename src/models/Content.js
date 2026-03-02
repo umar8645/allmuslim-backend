@@ -2,16 +2,15 @@ import mongoose from "mongoose";
 
 const ContentSchema = new mongoose.Schema(
   {
-    title: { type: String, trim: true },
+    title: String,
     description: String,
-    url: { type: String, required: true, index: true },
+    url: { type: String, index: true },
     thumbnail: String,
     source: String,
 
     type: {
       type: String,
       enum: ["waazi", "rss", "youtube", "notification"],
-      required: true,
       index: true
     },
 
@@ -19,5 +18,7 @@ const ContentSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+ContentSchema.index({ type: 1, dateTime: -1 });
 
 export default mongoose.model("Content", ContentSchema);

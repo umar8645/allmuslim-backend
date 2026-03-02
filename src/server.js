@@ -80,6 +80,16 @@ app.use((req, res) => {
 
 /**
  * =====================
+ * GLOBAL ERROR HANDLER  ✅ (AN ƘARA)
+ * =====================
+ */
+app.use((err, req, res, next) => {
+  console.error("❌ Global Error:", err);
+  res.status(500).json({ error: "Internal server error" });
+});
+
+/**
+ * =====================
  * START SERVER
  * =====================
  */

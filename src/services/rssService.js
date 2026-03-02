@@ -8,18 +8,14 @@ const parser = new Parser({
   }
 });
 
-// only allow real RSS feeds
 const feeds = (process.env.RSS_FEEDS || "")
   .split(",")
   .map(f => f.trim())
-  .filter(f =>
-    f.startsWith("http") &&
-    f.endsWith(".xml")
-  );
+  .filter(f => f.startsWith("http"));
 
 export const updateRSSFeeds = async () => {
-  if (feeds.length === 0) {
-    console.log("⚠️ No valid RSS (.xml) feeds configured");
+  if (!feeds.length) {
+    console.log("⚠️ No RSS feeds configured");
     return;
   }
 
@@ -27,12 +23,7 @@ export const updateRSSFeeds = async () => {
     try {
       const feed = await parser.parseURL(feedUrl);
 
-      if (!feed?.items?.length) {
-        console.log("⚠️ Empty RSS feed:", feedUrl);
-        continue;
-      }
-
-      for (const item of feed.items) {
+      for (const item of feed.items || []) {
         if (!item.link) continue;
 
         await RSSFeed.updateOne(
@@ -49,8 +40,8 @@ export const updateRSSFeeds = async () => {
       }
 
       console.log("✅ RSS saved:", feed.title);
-    } catch {
-      console.log("❌ RSS skipped (not real RSS):", feedUrl);
+    } catch (err) {
+      console.log("❌ RSS skipped:", feedUrl);
     }
   }
 };
