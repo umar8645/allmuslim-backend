@@ -1,9 +1,7 @@
-import { Router } from "express";
+import express from "express";
 import { getNotifications } from "../controllers/notificationController.js";
 
-const router = Router();
-
-// GET /api/notifications
+const router = express.Router();
 router.get("/", getNotifications);
 
 export default router;

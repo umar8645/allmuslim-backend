@@ -1,7 +1,8 @@
-import express from "express";
-import { getNotifications } from "../controllers/notificationController.js";
+import mongoose from "mongoose";
 
-const router = express.Router();
-router.get("/", getNotifications);
+const notificationSchema = new mongoose.Schema({
+  message: String,
+  createdAt: { type: Date, default: Date.now }
+});
 
-export default router;
+export default mongoose.model("Notification", notificationSchema);
