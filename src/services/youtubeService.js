@@ -12,7 +12,6 @@ const channels = (process.env.YOUTUBE_CHANNELS || "")
   .filter(Boolean);
 
 let keyIndex = 0;
-
 const getApiKey = () => apiKeys[keyIndex];
 
 const rotateKey = () => {
@@ -23,8 +22,10 @@ const rotateKey = () => {
 export const fetchLatestVideos = async () => {
   if (!apiKeys.length || !channels.length) {
     console.log("⚠️ YouTube config missing");
-    return;
+    return [];
   }
+
+  const newVideos = [];
 
   for (const channelId of channels) {
     let attempts = 0;
@@ -51,7 +52,7 @@ export const fetchLatestVideos = async () => {
         for (const item of res.data.items || []) {
           if (!item.id?.videoId) continue;
 
-          await Video.updateOne(
+          const result = await Video.updateOne(
             { videoId: item.id.videoId },
             {
               title: item.snippet.title,
@@ -62,22 +63,30 @@ export const fetchLatestVideos = async () => {
             },
             { upsert: true }
           );
+
+          if (result.upserted) {
+            newVideos.push({
+              title: item.snippet.title,
+              videoId: item.id.videoId,
+              speaker: item.snippet.channelTitle
+            });
+          }
         }
 
         console.log("✅ YouTube saved:", channelId);
         break; // 🟢 nasara → fita daga while
       } catch (err) {
         const status = err.response?.status;
-
         if ([400, 403, 429].includes(status)) {
           rotateKey();
           attempts++;
           continue;
         }
-
         console.log("⚠️ YouTube error:", err.message);
         break;
       }
     }
   }
+
+  return newVideos; // ✅ dawo da sabon videos don notifications
 };
