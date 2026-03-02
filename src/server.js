@@ -29,12 +29,7 @@ const app = express();
 app.set("trust proxy", 1);
 
 app.use(helmet());
-app.use(
-  cors({
-    origin: "*",
-    credentials: true,
-  })
-);
+app.use(cors({ origin: "*", credentials: true }));
 app.use(express.json({ limit: "10mb" }));
 app.use(morgan("dev"));
 
@@ -68,9 +63,6 @@ app.get("/health", (req, res) => {
  * API ROUTES
  * =====================
  */
-app.use("/api/auth", authRoutes);
-app.use("/api/admin", adminRoutes);
-
 app.use("/api/rss", rssRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/waazi", waaziRoutes);
@@ -83,9 +75,7 @@ app.use("/api/library", libraryRoutes);
  * =====================
  */
 app.use((req, res) => {
-  res.status(404).json({
-    error: "Route not found",
-  });
+  res.status(404).json({ error: "Route not found" });
 });
 
 /**
@@ -96,13 +86,12 @@ app.use((req, res) => {
 const startServer = async () => {
   try {
     await connectDB();
-
     startScheduler();
 
     const PORT = process.env.PORT || 4000;
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-    });
+    app.listen(PORT, () =>
+      console.log(`🚀 Server running on port ${PORT}`)
+    );
   } catch (error) {
     console.error("❌ Server failed to start:", error);
     process.exit(1);
