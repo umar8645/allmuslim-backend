@@ -5,6 +5,6 @@ const librarySchema = new mongoose.Schema({
   speaker: String,
   publishedAt: Date,
   sourceUrl: String
-});
+}, { timestamps: true });
 
 export default mongoose.model("LibraryItem", librarySchema);
