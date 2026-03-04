@@ -7,7 +7,7 @@ import rateLimit from "express-rate-limit";
 
 import connectDB from "./config/db.js";
 
-// ROUTES
+// ROUTES - tabbatar files suna nan da casing daidai
 import rssRoutes from "./routes/rssRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
 import waaziRoutes from "./routes/waaziRoutes.js";
@@ -67,7 +67,7 @@ const startServer = async () => {
     await connectDB();
     startScheduler();
 
-    const PORT = process.env.PORT || 4000;
+    const PORT = process.env.PORT || 4000; // Render zai sa PORT environment variable
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   } catch (error) {
     console.error("❌ Server failed to start:", error);
