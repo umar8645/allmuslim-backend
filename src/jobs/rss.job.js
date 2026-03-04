@@ -1,4 +1,3 @@
-// src/jobs/rss.job.js
 import Content from "../models/Content.js";
 import { fetchRSS } from "../services/rss.service.js";
 import { detectLanguage } from "../services/language.service.js";
@@ -10,6 +9,8 @@ const RSS_FEEDS = [
 ];
 
 export async function rssJob() {
+  console.log("📡 RSS Job Started");
+
   for (const url of RSS_FEEDS) {
     const items = await fetchRSS(url);
 
@@ -17,7 +18,8 @@ export async function rssJob() {
       const exists = await Content.findOne({ title: item.title });
       if (exists) continue;
 
-      const lang = detectLanguage(item.title + item.contentSnippet);
+      const lang = detectLanguage(item.title + " " + item.contentSnippet);
+
       const score = calculateQuality({
         title: item.title,
         description: item.contentSnippet,
@@ -30,11 +32,15 @@ export async function rssJob() {
         source: "rss",
         title: item.title,
         description: item.contentSnippet,
-        speaker: item.creator || "Unknown",
+        speaker: item.creator,
         language: lang,
         qualityScore: score,
         publishedAt: item.pubDate,
       });
+
+      console.log("✅ Inserted:", item.title);
     }
   }
+
+  console.log("📡 RSS Job Finished");
 }
