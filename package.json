@@ -34,5 +34,12 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.4"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/umar8645/allmuslim-backend.git"
+  },
+  "keywords": ["backend", "express", "rss", "allmuslim"],
+  "author": "Umar Muhammad",
+  "license": "MIT"
 }

@@ -1,3 +1,4 @@
+// src/server.js
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -61,7 +62,7 @@ app.use("/api/waazi", waaziRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/library", libraryRoutes);
 app.use("/api/scheduler", schedulerRoutes);
-app.use("/api/search", searchRoutes); // ✅ NOW SEARCH WORKS
+app.use("/api/search", searchRoutes);
 
 /**
  * 404 HANDLER
