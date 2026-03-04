@@ -1,4 +1,3 @@
-// src/models/Content.js
 import mongoose from "mongoose";
 
 const ContentSchema = new mongoose.Schema(
@@ -14,6 +13,9 @@ const ContentSchema = new mongoose.Schema(
     country: String,
     qualityScore: { type: Number, default: 0 },
     publishedAt: Date,
+
+    // ✅ ƙara category field domin populate
+    category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" }
   },
   { timestamps: true }
 );
