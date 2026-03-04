@@ -1,4 +1,3 @@
-// src/server.js
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -14,8 +13,8 @@ import videoRoutes from "./routes/videoRoutes.js";
 import waaziRoutes from "./routes/waaziRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import libraryRoutes from "./routes/libraryRoutes.js";
-import schedulerRoutes from "./routes/schedulerRoutes.js";
-import searchRoutes from "./routes/searchRoutes.js"; // ✅ ADDED
+import schedulerRoutes from "./routes/scheduler.js";
+import searchRoutes from "./routes/searchRoutes.js";
 
 // JOBS
 import { startScheduler } from "./jobs/scheduler.js";
@@ -39,23 +38,13 @@ app.use(
   })
 );
 
-/**
- * ROOT & HEALTH
- */
+// ROOT & HEALTH
 app.get("/", (req, res) => {
-  res.json({
-    status: "AllMuslim Backend Running 🚀",
-    version: "1.0.0",
-  });
+  res.json({ status: "AllMuslim Backend Running 🚀", version: "1.0.0" });
 });
+app.get("/health", (req, res) => res.json({ status: "OK" }));
 
-app.get("/health", (req, res) => {
-  res.json({ status: "OK" });
-});
-
-/**
- * API ROUTES
- */
+// API ROUTES
 app.use("/api/rss", rssRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/waazi", waaziRoutes);
@@ -64,16 +53,10 @@ app.use("/api/library", libraryRoutes);
 app.use("/api/scheduler", schedulerRoutes);
 app.use("/api/search", searchRoutes);
 
-/**
- * 404 HANDLER
- */
-app.use((req, res) => {
-  res.status(404).json({ error: "Route not found" });
-});
+// 404 HANDLER
+app.use((req, res) => res.status(404).json({ error: "Route not found" }));
 
-/**
- * GLOBAL ERROR HANDLER
- */
+// GLOBAL ERROR HANDLER
 app.use((err, req, res, next) => {
   console.error("❌ Global Error:", err);
   res.status(500).json({ error: "Internal server error" });
@@ -85,9 +68,7 @@ const startServer = async () => {
     startScheduler();
 
     const PORT = process.env.PORT || 4000;
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-    });
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   } catch (error) {
     console.error("❌ Server failed to start:", error);
     process.exit(1);
