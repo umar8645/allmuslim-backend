@@ -20,6 +20,6 @@ export async function addToPlaylist(playlistId, videoId) {
       }
     );
   } catch {
-    // silent fail (no spam)
+    // silent fail
   }
 }

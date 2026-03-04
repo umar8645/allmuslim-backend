@@ -1,4 +1,3 @@
-// src/services/youtube.service.js
 import axios from "axios";
 
 const KEYS = process.env.YOUTUBE_API_KEYS.split(",");

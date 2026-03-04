@@ -1,4 +1,4 @@
-import { fetchPlaylistItems } from "../services/youtube.js";
+import { fetchPlaylistItems } from "../services/youtube.service.js";
 import Content from "../models/Content.js";
 
 const MAX_ITEMS = Number(process.env.MAX_ITEMS_PER_RUN || 20);
@@ -10,10 +10,7 @@ export async function runYouTubeJob() {
     const videos = await fetchPlaylistItems(playlistId, MAX_ITEMS);
 
     for (const v of videos) {
-      // simple filter
-      if (!/islam|quran|hadith|tafsir|waazi|khutbah/i.test(v.title)) {
-        continue;
-      }
+      if (!/islam|quran|hadith|tafsir|waazi|khutbah/i.test(v.title)) continue;
 
       await Content.updateOne(
         { sourceId: v.videoId },

@@ -18,20 +18,13 @@ export async function runYouTubeDiscovery() {
       const videoId = item.id?.videoId;
       if (!videoId) continue;
 
-      // 1️⃣ Language filter
       if (!isAllowedLanguage(v.title + " " + v.description)) continue;
 
-      // 2️⃣ Age limit
-      const ageDays =
-        (Date.now() - new Date(v.publishedAt)) / 86400000;
+      const ageDays = (Date.now() - new Date(v.publishedAt)) / 86400000;
       if (ageDays > MAX_AGE) continue;
 
-      // 3️⃣ Description minimum
-      if ((v.description || "").length < Number(process.env.MIN_DESCRIPTION_LENGTH)) {
-        continue;
-      }
+      if ((v.description || "").length < Number(process.env.MIN_DESCRIPTION_LENGTH)) continue;
 
-      // 4️⃣ Quality score
       const score = calculateQualityScore({
         title: v.title,
         description: v.description,
