@@ -3,6 +3,8 @@ import cron from "node-cron";
 import { runDiscoveryJob } from "./discovery.v2.job.js";
 import { runCleanupJob } from "./cleanup.job.js";
 import { runTrustScoreJob } from "./trustScore.job.js";
+import { rssJob } from "./rss.job.js";
+import { runYouTubeDiscovery } from "./youtubeDiscoveryJob.js";
 
 let schedulerStatus = "idle";
 let started = false;
@@ -18,10 +20,9 @@ export function startScheduler() {
   console.log("🟢 Scheduler Started");
 
   /**
-   * 🔍 Discovery Job
-   * Every 30 minutes
+   * 🔎 DISCOVERY (TEST EVERY 1 MINUTE)
    */
-  cron.schedule("*/30 * * * *", async () => {
+  cron.schedule("*/1 * * * *", async () => {
     try {
       console.log("🚀 Discovery Job started");
       await runDiscoveryJob();
@@ -32,31 +33,43 @@ export function startScheduler() {
   });
 
   /**
-   * 🧹 Cleanup Job
-   * Daily at 02:00 AM
+   * 📡 RSS JOB (Every 5 minutes)
    */
-  cron.schedule("0 2 * * *", async () => {
+  cron.schedule("*/5 * * * *", async () => {
     try {
-      console.log("🧹 Cleanup Job started");
-      await runCleanupJob();
-      console.log("✅ Cleanup Job done");
+      console.log("📡 RSS Job started");
+      await rssJob();
+      console.log("✅ RSS Job done");
     } catch (err) {
-      console.error("❌ Cleanup Job Failed:", err.message);
+      console.error("❌ RSS Job Failed:", err.message);
     }
   });
 
   /**
-   * ⭐ Trust Score Job
-   * Every 6 hours
+   * 🎥 YOUTUBE DISCOVERY (Every 10 minutes)
+   */
+  cron.schedule("*/10 * * * *", async () => {
+    try {
+      console.log("🎥 YouTube Discovery started");
+      await runYouTubeDiscovery();
+      console.log("✅ YouTube Discovery done");
+    } catch (err) {
+      console.error("❌ YouTube Discovery Failed:", err.message);
+    }
+  });
+
+  /**
+   * 🧹 Cleanup Daily
+   */
+  cron.schedule("0 2 * * *", async () => {
+    await runCleanupJob();
+  });
+
+  /**
+   * ⭐ Trust Score Every 6 hours
    */
   cron.schedule("0 */6 * * *", async () => {
-    try {
-      console.log("⭐ Trust Score Job started");
-      await runTrustScoreJob();
-      console.log("✅ Trust Score Job updated");
-    } catch (err) {
-      console.error("❌ Trust Score Job Failed:", err.message);
-    }
+    await runTrustScoreJob();
   });
 }
 

@@ -4,9 +4,12 @@ export async function runDiscoveryJob() {
   try {
     console.log("🔎 Discovery started...");
 
-    // TODO: your real YouTube fetching logic here
+    const exists = await Content.findOne({ videoId: "sample123" });
+    if (exists) {
+      console.log("⏩ Sample already exists");
+      return;
+    }
 
-    // Example dummy insert
     await Content.create({
       source: "youtube",
       videoId: "sample123",
@@ -21,7 +24,7 @@ export async function runDiscoveryJob() {
       publishedAt: new Date(),
     });
 
-    console.log("✅ Discovery completed");
+    console.log("✅ Discovery inserted sample data");
   } catch (error) {
     console.error("❌ Discovery Error:", error.message);
   }
