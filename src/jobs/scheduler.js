@@ -19,9 +19,7 @@ export function startScheduler() {
   schedulerStatus = "active";
   console.log("🟢 Scheduler Started");
 
-  /**
-   * 🔎 DISCOVERY (TEST EVERY 1 MINUTE)
-   */
+  // 🔎 DISCOVERY (Every 1 minute)
   cron.schedule("*/1 * * * *", async () => {
     try {
       console.log("🚀 Discovery Job started");
@@ -32,9 +30,7 @@ export function startScheduler() {
     }
   });
 
-  /**
-   * 📡 RSS JOB (Every 5 minutes)
-   */
+  // 📡 RSS JOB (Every 5 minutes)
   cron.schedule("*/5 * * * *", async () => {
     try {
       console.log("📡 RSS Job started");
@@ -45,9 +41,7 @@ export function startScheduler() {
     }
   });
 
-  /**
-   * 🎥 YOUTUBE DISCOVERY (Every 10 minutes)
-   */
+  // 🎥 YOUTUBE DISCOVERY (Every 10 minutes)
   cron.schedule("*/10 * * * *", async () => {
     try {
       console.log("🎥 YouTube Discovery started");
@@ -58,16 +52,12 @@ export function startScheduler() {
     }
   });
 
-  /**
-   * 🧹 Cleanup Daily
-   */
+  // 🧹 Cleanup Daily at 2 AM
   cron.schedule("0 2 * * *", async () => {
     await runCleanupJob();
   });
 
-  /**
-   * ⭐ Trust Score Every 6 hours
-   */
+  // ⭐ Trust Score Every 6 hours
   cron.schedule("0 */6 * * *", async () => {
     await runTrustScoreJob();
   });
