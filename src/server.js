@@ -7,7 +7,7 @@ import rateLimit from "express-rate-limit";
 
 import connectDB from "./config/db.js";
 
-// ROUTES - tabbatar files suna nan da casing daidai
+// ROUTES
 import rssRoutes from "./routes/rssRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
 import waaziRoutes from "./routes/waaziRoutes.js";
@@ -31,7 +31,7 @@ app.use(morgan("dev"));
 
 app.use(
   rateLimit({
-    windowMs: 15 * 60 * 1000,
+    windowMs: 15 * 60 * 1000, // 15 min
     max: 1000,
     standardHeaders: true,
     legacyHeaders: false,
@@ -67,7 +67,7 @@ const startServer = async () => {
     await connectDB();
     startScheduler();
 
-    const PORT = process.env.PORT || 4000; // Render zai sa PORT environment variable
+    const PORT = process.env.PORT || 4000; // Render zai karɓi PORT
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   } catch (error) {
     console.error("❌ Server failed to start:", error);
