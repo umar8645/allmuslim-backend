@@ -13,7 +13,7 @@ import videoRoutes from "./routes/videoRoutes.js";
 import waaziRoutes from "./routes/waaziRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import libraryRoutes from "./routes/libraryRoutes.js";
-import schedulerRoutes from "./routes/scheduler.js";
+import schedulerRoutes from "./routes/schedulerRoutes.js"; // ✅ gyara nan
 import searchRoutes from "./routes/searchRoutes.js";
 
 // JOBS
