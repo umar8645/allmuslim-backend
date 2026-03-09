@@ -1,8 +1,17 @@
 import admin from "firebase-admin"
-import serviceAccount from "../firebase-service-account.json" assert { type: "json" }
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-})
+let serviceAccount = null
+
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+}
+
+if (serviceAccount) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  })
+} else {
+  console.log("Firebase service account not found")
+}
 
 export default admin
