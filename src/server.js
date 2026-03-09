@@ -1,78 +1,44 @@
-import express from "express";
-import dotenv from "dotenv";
-import cors from "cors";
-import helmet from "helmet";
-import morgan from "morgan";
-import rateLimit from "express-rate-limit";
+import express from "express"
+import cors from "cors"
+import dotenv from "dotenv"
+import cron from "node-cron"
 
-import connectDB from "./config/db.js";
+import connectDB from "./config/database.js"
+import "./config/firebase.js"
 
-// ROUTES
-import rssRoutes from "./routes/rssRoutes.js";
-import videoRoutes from "./routes/videoRoutes.js";
-import waaziRoutes from "./routes/waaziRoutes.js";
-import notificationRoutes from "./routes/notificationRoutes.js";
-import libraryRoutes from "./routes/libraryRoutes.js";
-import schedulerRoutes from "./routes/schedulerRoutes.js"; // ✅ gyara nan
-import searchRoutes from "./routes/searchRoutes.js";
+import lectureRoutes from "./routes/lectures.js"
 
-// JOBS
-import { startScheduler } from "./jobs/scheduler.js";
+import { fetchYouTubeLectures } from "./crawlers/youtubeCrawler.js"
+import { fetchRSSLectures } from "./crawlers/rssCrawler.js"
 
-dotenv.config();
-const app = express();
+import { apiLimiter } from "./middleware/rateLimiter.js"
+import { errorHandler } from "./middleware/errorMiddleware.js"
 
-app.set("trust proxy", 1);
+dotenv.config()
 
-app.use(helmet());
-app.use(cors({ origin: "*", credentials: true }));
-app.use(express.json({ limit: "10mb" }));
-app.use(morgan("dev"));
+const app = express()
 
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 min
-    max: 1000,
-    standardHeaders: true,
-    legacyHeaders: false,
-  })
-);
+app.use(cors())
+app.use(express.json())
 
-// ROOT & HEALTH
-app.get("/", (req, res) => {
-  res.json({ status: "AllMuslim Backend Running 🚀", version: "1.0.0" });
-});
-app.get("/health", (req, res) => res.json({ status: "OK" }));
+app.use(apiLimiter)
 
-// API ROUTES
-app.use("/api/rss", rssRoutes);
-app.use("/api/videos", videoRoutes);
-app.use("/api/waazi", waaziRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.use("/api/library", libraryRoutes);
-app.use("/api/scheduler", schedulerRoutes);
-app.use("/api/search", searchRoutes);
+connectDB()
 
-// 404 HANDLER
-app.use((req, res) => res.status(404).json({ error: "Route not found" }));
+app.use("/api/lectures", lectureRoutes)
 
-// GLOBAL ERROR HANDLER
-app.use((err, req, res, next) => {
-  console.error("❌ Global Error:", err);
-  res.status(500).json({ error: "Internal server error" });
-});
+app.use(errorHandler)
 
-const startServer = async () => {
-  try {
-    await connectDB();
-    startScheduler();
+const PORT = process.env.PORT || 5000
 
-    const PORT = process.env.PORT || 4000; // Render zai karɓi PORT
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-  } catch (error) {
-    console.error("❌ Server failed to start:", error);
-    process.exit(1);
-  }
-};
+app.listen(PORT, () => {
+  console.log("AllMuslim Backend running on port " + PORT)
+})
 
-startServer();
+cron.schedule("0 * * * *", () => {
+  fetchYouTubeLectures()
+})
+
+cron.schedule("30 * * * *", () => {
+  fetchRSSLectures()
+})
