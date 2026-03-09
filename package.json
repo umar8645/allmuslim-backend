@@ -12,6 +12,7 @@
     "express": "^5.2.1",
     "firebase-admin": "^13.7.0",
     "mongoose": "^9.2.4",
-    "node-cron": "^3.0.3"
+    "node-cron": "^3.0.3",
+    "youtube-search": "^1.1.6"
   }
 }
