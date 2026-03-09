@@ -13,6 +13,7 @@
     "firebase-admin": "^13.7.0",
     "mongoose": "^9.2.4",
     "node-cron": "^3.0.3",
+    "rss-parser": "^3.13.0",
     "youtube-search": "^1.1.6"
   }
 }
