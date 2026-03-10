@@ -1,13 +1,20 @@
 import youtubeSearch from "youtube-search"
 import Lecture from "../models/Lecture.js"
 
-const opts = {
-  maxResults: 10,
-  key: process.env.YOUTUBE_API_KEY
+const keys = process.env.YOUTUBE_API_KEYS.split(",")
+
+const getRandomKey = () => {
+  return keys[Math.floor(Math.random() * keys.length)]
 }
 
 export const fetchYouTubeLectures = async () => {
+
   try {
+
+    const opts = {
+      maxResults: 10,
+      key: getRandomKey()
+    }
 
     const results = await youtubeSearch("Islamic lecture", opts)
 
@@ -16,14 +23,16 @@ export const fetchYouTubeLectures = async () => {
       const exists = await Lecture.findOne({ url: video.link })
 
       if (!exists) {
+
         await Lecture.create({
           title: video.title,
-          scholar: video.channelTitle,
+          scholar: video.channelTitle || "YouTube",
           source: "youtube",
           url: video.link,
-          thumbnail: video.thumbnails.default.url,
+          thumbnail: video.thumbnails?.default?.url || "",
           views: 0
         })
+
       }
 
     }
@@ -31,6 +40,9 @@ export const fetchYouTubeLectures = async () => {
     console.log("YouTube lectures imported")
 
   } catch (error) {
-    console.error(error)
+
+    console.error("YouTube crawler error:", error)
+
   }
+
 }

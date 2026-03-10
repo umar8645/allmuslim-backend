@@ -18,16 +18,14 @@ dotenv.config()
 
 const app = express()
 
-// middleware
 app.use(cors())
 app.use(express.json())
 app.use(apiLimiter)
 
-// connect database
 connectDB()
 
-// home route
 app.get("/", (req, res) => {
+
   res.json({
     name: "AllMuslim API",
     status: "running",
@@ -37,31 +35,28 @@ app.get("/", (req, res) => {
       search: "/api/lectures/search"
     }
   })
+
 })
 
-// health check
 app.get("/health", (req, res) => {
   res.json({ status: "ok" })
 })
 
-// routes
 app.use("/api/lectures", lectureRoutes)
 
-// error handler
 app.use(errorHandler)
 
-// start server
 const PORT = process.env.PORT || 5000
 
 app.listen(PORT, () => {
   console.log("AllMuslim Backend running on port " + PORT)
 })
 
-// cron jobs
-cron.schedule("0 * * * *", () => {
-  fetchYouTubeLectures()
+
+cron.schedule("0 * * * *", fetchYouTubeLectures, {
+  timezone: "UTC"
 })
 
-cron.schedule("30 * * * *", () => {
-  fetchRSSLectures()
+cron.schedule("30 * * * *", fetchRSSLectures, {
+  timezone: "UTC"
 })

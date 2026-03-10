@@ -1,12 +1,17 @@
 import mongoose from "mongoose"
 
 const LectureSchema = new mongoose.Schema({
+
   title: String,
   scholar: String,
   source: String,
   url: String,
   thumbnail: String,
-  views: { type: Number, default: 0 },
+
+  views: {
+    type: Number,
+    default: 0
+  },
 
   topic: String,
   language: String,
@@ -19,6 +24,7 @@ const LectureSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+
 })
 
 LectureSchema.index({
@@ -28,5 +34,8 @@ LectureSchema.index({
   keywords: "text",
   transcript: "text"
 })
+
+LectureSchema.index({ createdAt: -1 })
+LectureSchema.index({ url: 1 }, { unique: true })
 
 export default mongoose.model("Lecture", LectureSchema)

@@ -36,7 +36,7 @@ export const fetchRSSLectures = async () => {
 
       }
 
-      console.log("RSS feed imported:", feed.title)
+      console.log("RSS imported:", feed.title)
 
     } catch (error) {
 
