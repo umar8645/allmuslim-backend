@@ -1,20 +1,24 @@
 {
-  "name": "allmuslim-backend",
-  "version": "1.0.0",
-  "type": "module",
-  "main": "src/server.js",
-  "scripts": {
-    "start": "node src/server.js"
-  },
-  "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^17.3.1",
-    "express": "^5.2.1",
-    "express-rate-limit": "^8.3.1",
-    "firebase-admin": "^13.7.0",
-    "mongoose": "^9.2.4",
-    "node-cron": "^3.0.3",
-    "rss-parser": "^3.13.0",
-    "youtube-search": "^1.1.6"
-  }
+"name": "allmuslim-backend",
+"version": "2.0.0",
+"type": "module",
+"main": "src/server.js",
+"scripts": {
+"start": "node src/server.js",
+"dev": "nodemon src/server.js"
+},
+"dependencies": {
+"bcryptjs": "^2.4.3",
+"cors": "^2.8.6",
+"dotenv": "^17.3.1",
+"express": "^4.19.2",
+"express-rate-limit": "^8.3.1",
+"firebase-admin": "^13.7.0",
+"jsonwebtoken": "^9.0.2",
+"mongoose": "^8.5.0",
+"node-cron": "^3.0.3",
+"rss-parser": "^3.13.0",
+"youtube-search": "^1.1.6",
+"openai": "^4.52.0"
+}
 }

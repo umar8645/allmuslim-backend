@@ -1,7 +1,6 @@
 import Lecture from "../models/Lecture.js"
 import { getTrendingLectures } from "../services/trendingService.js"
 
-
 export const getLectures = async (req, res) => {
 
   try {
@@ -24,7 +23,6 @@ export const getLectures = async (req, res) => {
 
 }
 
-
 export const getTrending = async (req, res) => {
 
   try {
@@ -40,7 +38,6 @@ export const getTrending = async (req, res) => {
 
 }
 
-
 export const searchLectures = async (req, res) => {
 
   try {
@@ -52,6 +49,24 @@ export const searchLectures = async (req, res) => {
     const lectures = await Lecture.find({
       $text: { $search: q }
     }).sort({ createdAt: -1 })
+
+    res.json(lectures)
+
+  } catch (error) {
+
+    res.status(500).json({ message: error.message })
+
+  }
+
+}
+
+export const getFeed = async (req, res) => {
+
+  try {
+
+    const lectures = await Lecture.aggregate([
+      { $sample: { size: 20 } }
+    ])
 
     res.json(lectures)
 
