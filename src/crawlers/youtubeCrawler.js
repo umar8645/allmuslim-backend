@@ -1,48 +1,20 @@
-import youtubeSearch from "youtube-search"
-import Lecture from "../models/Lecture.js"
+// src/crawlers/youtubeCrawler.js
+import axios from "axios";
 
-const keys = process.env.YOUTUBE_API_KEYS.split(",")
+const keysEnv = process.env.YOUTUBE_API_KEYS;
 
-const getRandomKey = () => {
-  return keys[Math.floor(Math.random() * keys.length)]
+if (!keysEnv) {
+  console.error("❌ YOUTUBE_API_KEYS missing in .env");
+  process.exit(1);
 }
+
+export const keys = keysEnv.split(",");
 
 export const fetchYouTubeLectures = async () => {
-
   try {
-
-    const opts = {
-      maxResults: 10,
-      key: getRandomKey()
-    }
-
-    const results = await youtubeSearch("Islamic lecture", opts)
-
-    for (let video of results.results) {
-
-      const exists = await Lecture.findOne({ url: video.link })
-
-      if (!exists) {
-
-        await Lecture.create({
-          title: video.title,
-          scholar: video.channelTitle || "YouTube",
-          source: "youtube",
-          url: video.link,
-          thumbnail: video.thumbnails?.default?.url || "",
-          views: 0
-        })
-
-      }
-
-    }
-
-    console.log("YouTube lectures imported")
-
-  } catch (error) {
-
-    console.error("YouTube crawler error:", error)
-
+    console.log("🔍 Fetching YouTube lectures with keys:", keys.length);
+    // TODO: your actual fetching code here
+  } catch (err) {
+    console.error("YouTube fetch error:", err.message);
   }
-
-}
+};

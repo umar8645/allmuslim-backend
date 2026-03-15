@@ -1,57 +1,70 @@
-import express from "express"
-import cors from "cors"
-import dotenv from "dotenv"
-import cron from "node-cron"
+// src/server.js
+import dotenv from "dotenv";
+dotenv.config(); // load .env first
 
-import connectDB from "./config/database.js"
+import express from "express";
+import cors from "cors";
+import cron from "node-cron";
 
-import lectureRoutes from "./routes/lectures.js"
-import authRoutes from "./routes/auth.js"
-import aiRoutes from "./routes/ai.js"
+import connectDB from "./config/database.js";
 
-import { fetchYouTubeLectures } from "./crawlers/youtubeCrawler.js"
-import { fetchRSSLectures } from "./crawlers/rssCrawler.js"
+import lectureRoutes from "./routes/lectures.js";
+import authRoutes from "./routes/auth.js";
+import aiRoutes from "./routes/ai.js";
 
-import { apiLimiter } from "./middleware/rateLimiter.js"
-import { errorHandler } from "./middleware/errorMiddleware.js"
+import { fetchYouTubeLectures } from "./crawlers/youtubeCrawler.js";
+import { fetchRSSLectures } from "./crawlers/rssCrawler.js";
 
-dotenv.config()
+import { apiLimiter } from "./middleware/rateLimiter.js";
+import { errorHandler } from "./middleware/errorMiddleware.js";
 
-const app = express()
+const app = express();
 
-app.set("trust proxy", 1)
+// -------------------
+// Check required env
+// -------------------
+const requiredEnv = ["OPENAI_API_KEY", "YOUTUBE_API_KEYS", "MONGO_URI", "JWT_SECRET"];
+for (const key of requiredEnv) {
+  if (!process.env[key]) {
+    console.error(`❌ ${key} is missing in .env`);
+    process.exit(1);
+  }
+}
 
-app.use(cors())
+app.set("trust proxy", 1);
+app.use(cors());
+app.use(express.json());
+app.use(apiLimiter);
 
-app.use(express.json())
+// Connect DB
+connectDB().catch(err => {
+  console.error("MongoDB Connection Error:", err.message);
+  process.exit(1);
+});
 
-app.use(apiLimiter)
-
-connectDB()
-
+// -------------------
+// Routes
+// -------------------
 app.get("/", (req, res) => {
+  res.json({ name: "AllMuslim API", status: "running" });
+});
 
-res.json({
-name: "AllMuslim API",
-status: "running"
-})
+app.use("/api/auth", authRoutes);
+app.use("/api/lectures", lectureRoutes);
+app.use("/api/ai", aiRoutes);
 
-})
+app.use(errorHandler);
 
-app.use("/api/auth", authRoutes)
-app.use("/api/lectures", lectureRoutes)
-app.use("/api/ai", aiRoutes)
-
-app.use(errorHandler)
-
-const PORT = process.env.PORT || 5000
-
+// -------------------
+// Start Server
+// -------------------
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
+  console.log(`🚀 AllMuslim Backend running on port ${PORT}`);
+});
 
-console.log("🚀 AllMuslim Backend running on port " + PORT)
-
-})
-
-cron.schedule("0 * * * *", fetchYouTubeLectures)
-
-cron.schedule("30 * * * *", fetchRSSLectures)
+// -------------------
+// Cron Jobs
+// -------------------
+cron.schedule("0 * * * *", fetchYouTubeLectures);
+cron.schedule("30 * * * *", fetchRSSLectures);
