@@ -21,23 +21,17 @@ const app = express()
 
 // check required env variables
 const requiredEnv = [
-"OPENAI_API_KEY",
-"YOUTUBE_API_KEYS",
-"MONGO_URI",
-"JWT_SECRET"
+  "OPENAI_API_KEY",
+  "YOUTUBE_API_KEYS",
+  "MONGO_URI",
+  "JWT_SECRET"
 ]
 
 for (const key of requiredEnv) {
-
-if (!process.env[key]) {
-
-```
-console.error(key + " missing in .env")
-process.exit(1)
-```
-
-}
-
+  if (!process.env[key]) {
+    console.error(`${key} missing in .env`)  // ✅ gyara backtick
+    process.exit(1)
+  }
 }
 
 app.set("trust proxy", 1)
@@ -51,12 +45,10 @@ connectDB()
 
 // routes
 app.get("/", (req, res) => {
-
-res.json({
-name: "AllMuslim API",
-status: "running"
-})
-
+  res.json({
+    name: "AllMuslim API",
+    status: "running"
+  })
 })
 
 app.use("/api/auth", authRoutes)
@@ -69,16 +61,14 @@ app.use(errorHandler)
 const PORT = process.env.PORT || 5000
 
 app.listen(PORT, () => {
-
-console.log("AllMuslim Backend running on port " + PORT)
-
+  console.log("AllMuslim Backend running on port " + PORT)
 })
 
 // cron jobs
 cron.schedule("0 * * * *", async () => {
-await fetchYouTubeLectures()
+  await fetchYouTubeLectures()
 })
 
 cron.schedule("30 * * * *", async () => {
-await fetchRSSLectures()
+  await fetchRSSLectures()
 })
