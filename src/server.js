@@ -19,7 +19,7 @@ import { errorHandler } from "./middleware/errorMiddleware.js"
 
 const app = express()
 
-// check env
+// check required env variables
 const requiredEnv = [
 "OPENAI_API_KEY",
 "YOUTUBE_API_KEYS",
@@ -32,7 +32,7 @@ for (const key of requiredEnv) {
 if (!process.env[key]) {
 
 ```
-console.error(`❌ ${key} missing in .env`)
+console.error(key + " missing in .env")
 process.exit(1)
 ```
 
@@ -46,6 +46,7 @@ app.use(cors())
 app.use(express.json())
 app.use(apiLimiter)
 
+// connect database
 connectDB()
 
 // routes
@@ -64,12 +65,12 @@ app.use("/api/ai", aiRoutes)
 
 app.use(errorHandler)
 
-// server
+// start server
 const PORT = process.env.PORT || 5000
 
 app.listen(PORT, () => {
 
-console.log(`🚀 AllMuslim Backend running on port ${PORT}`)
+console.log("AllMuslim Backend running on port " + PORT)
 
 })
 
