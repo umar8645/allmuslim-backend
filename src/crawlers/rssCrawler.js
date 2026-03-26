@@ -10,40 +10,26 @@ const feeds = [
 ]
 
 export const fetchRSSLectures = async () => {
-
   for (let url of feeds) {
-
     try {
-
       const feed = await parser.parseURL(url)
 
       for (let item of feed.items) {
 
-        const exists = await Lecture.findOne({ url: item.link })
+        if (await Lecture.findOne({ url: item.link })) continue
 
-        if (!exists) {
-
-          await Lecture.create({
-            title: item.title,
-            scholar: feed.title,
-            source: "rss",
-            url: item.link,
-            thumbnail: "",
-            views: 0
-          })
-
-        }
-
+        await Lecture.create({
+          title: item.title,
+          scholar: feed.title,
+          source: "rss",
+          url: item.link
+        })
       }
 
-      console.log("RSS imported:", feed.title)
+      console.log("✅ RSS:", feed.title)
 
-    } catch (error) {
-
-      console.error("RSS error:", error)
-
+    } catch (err) {
+      console.error("RSS error:", err.message)
     }
-
   }
-
 }

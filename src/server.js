@@ -14,61 +14,26 @@ import aiRoutes from "./routes/ai.js"
 import { fetchYouTubeLectures } from "./crawlers/youtubeCrawler.js"
 import { fetchRSSLectures } from "./crawlers/rssCrawler.js"
 
-import { apiLimiter } from "./middleware/rateLimiter.js"
-import { errorHandler } from "./middleware/errorMiddleware.js"
-
 const app = express()
-
-// check required env variables
-const requiredEnv = [
-  "OPENAI_API_KEY",
-  "YOUTUBE_API_KEYS",
-  "MONGO_URI",
-  "JWT_SECRET"
-]
-
-for (const key of requiredEnv) {
-  if (!process.env[key]) {
-    console.error(`${key} missing in .env`)  // ✅ gyara backtick
-    process.exit(1)
-  }
-}
-
-app.set("trust proxy", 1)
 
 app.use(cors())
 app.use(express.json())
-app.use(apiLimiter)
 
-// connect database
 connectDB()
 
-// routes
 app.get("/", (req, res) => {
-  res.json({
-    name: "AllMuslim API",
-    status: "running"
-  })
+  res.json({ status: "OK" })
 })
 
 app.use("/api/auth", authRoutes)
 app.use("/api/lectures", lectureRoutes)
 app.use("/api/ai", aiRoutes)
 
-app.use(errorHandler)
-
-// start server
 const PORT = process.env.PORT || 5000
 
 app.listen(PORT, () => {
-  console.log("AllMuslim Backend running on port " + PORT)
+  console.log("🚀 Server running on " + PORT)
 })
 
-// cron jobs
-cron.schedule("0 * * * *", async () => {
-  await fetchYouTubeLectures()
-})
-
-cron.schedule("30 * * * *", async () => {
-  await fetchRSSLectures()
-})
+cron.schedule("0 */3 * * *", fetchYouTubeLectures)
+cron.schedule("30 */3 * * *", fetchRSSLectures)
