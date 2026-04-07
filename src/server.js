@@ -13,6 +13,8 @@ import aiRoutes from "./routes/ai.js"
 import globalSearchRoutes from "./routes/globalSearch.js"
 import liveRoutes from "./routes/live.js"
 import downloadRoutes from "./routes/download.js"
+import historyRoutes from "./routes/history.js"   
+import scholarRoutes from "./routes/scholars.js"   // ✅ sabo
 
 import { fetchYouTubeLectures } from "./crawlers/youtubeCrawler.js"
 import { fetchRSSLectures } from "./crawlers/rssCrawler.js"
@@ -60,6 +62,8 @@ app.use("/api/ai", aiRoutes)
 app.use("/api/search", globalSearchRoutes)   // ✅ gyara route
 app.use("/api/live", liveRoutes)
 app.use("/api/download", downloadRoutes)
+app.use("/api/history", historyRoutes)       
+app.use("/api/scholars", scholarRoutes)      // ✅ sabo
 
 app.use(errorHandler)
 
