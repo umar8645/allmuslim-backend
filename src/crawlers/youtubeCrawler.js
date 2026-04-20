@@ -10,7 +10,6 @@ if (!keysEnv) {
 const keys = keysEnv.split(",")
 const getKey = () => keys[Math.floor(Math.random() * keys.length)]
 
-// ✅ Keywords da yawa
 const keywords = [
   "Islamic lecture",
   "Quran tafsir",
@@ -26,13 +25,9 @@ const keywords = [
 export const fetchYouTubeLectures = async () => {
   try {
     for (let keyword of keywords) {
-      const results = await youtubeSearch(keyword, {
-        maxResults: 10,
-        key: getKey()
-      })
-
+      const results = await youtubeSearch(keyword, { maxResults: 10, key: getKey() })
       for (let video of results.results) {
-        const exists = await Lecture.findOne({ url: video.link })
+        const exists = await Lecture.findOne({ url: video.id })
         if (!exists) {
           let summary = ""
           let ayahs = []
@@ -49,17 +44,16 @@ export const fetchYouTubeLectures = async () => {
             scholar: video.channelTitle || "YouTube",
             source: "youtube",
             platform: "youtube",
-            url: video.link,
+            url: video.id, // videoId
             thumbnail: video.thumbnails?.default?.url || "",
-            views: 0,
             transcript: summary,
             quranReferences: ayahs,
-            classification: classification
+            classification
           })
         }
       }
     }
-    console.log("✅ YouTube lectures imported with multiple keywords")
+    console.log("✅ YouTube lectures imported")
   } catch (error) {
     console.error("YouTube crawler error:", error.message)
   }

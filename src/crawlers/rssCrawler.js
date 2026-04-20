@@ -3,8 +3,6 @@ import Lecture from "../models/Lecture.js"
 import { summarizeLecture, detectQuranAyah } from "../services/aiService.js"
 
 const parser = new Parser()
-
-// ✅ Ƙara feeds masu yawa
 const feeds = [
   "https://muslimmatters.org/feed/",
   "https://islamqa.info/en/rss",
@@ -22,9 +20,11 @@ export const fetchRSSLectures = async () => {
       for (let item of feed.items) {
         const exists = await Lecture.findOne({ url: item.link })
         if (!exists) {
+          const mediaUrl = item.enclosure?.url || item.link
+          const platform = item.enclosure?.url ? "rss-media" : "rss-page"
+
           let summary = ""
           let ayahs = []
-
           if (process.env.ENABLE_AI === "true") {
             summary = await summarizeLecture(item.title)
             ayahs = await detectQuranAyah(item.title)
@@ -34,10 +34,9 @@ export const fetchRSSLectures = async () => {
             title: item.title,
             scholar: feed.title,
             source: "rss",
-            platform: "blog",
-            url: item.link,
-            thumbnail: "",
-            views: 0,
+            platform,
+            url: mediaUrl,
+            thumbnail: item.enclosure?.url || "",
             transcript: summary,
             quranReferences: ayahs
           })
