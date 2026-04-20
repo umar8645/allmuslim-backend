@@ -24,7 +24,6 @@ import { errorHandler } from "./middleware/errorMiddleware.js"
 
 const app = express()
 
-// check required env variables
 const requiredEnv = ["OPENAI_API_KEY","YOUTUBE_API_KEYS","MONGO_URI","JWT_SECRET"]
 for (const key of requiredEnv) {
   if (!process.env[key]) {
@@ -39,17 +38,13 @@ app.use(cors())
 app.use(express.json())
 app.use(apiLimiter)
 
-// connect database
 connectDB()
 
-// routes
 app.get("/", (req, res) => {
   res.json({ name: "AllMuslim API", status: "running" })
 })
 
-// 🔑 Auth routes
 app.use("/api/auth", authRoutes)
-
 app.use("/api/lectures", lectureRoutes)
 app.use("/api/ai", aiRoutes)
 app.use("/api/search", globalSearchRoutes)
@@ -65,6 +60,5 @@ app.listen(PORT, () => {
   console.log("AllMuslim Backend running on port " + PORT)
 })
 
-// cron jobs
 cron.schedule("0 * * * *", async () => { await fetchYouTubeLectures() })
 cron.schedule("30 * * * *", async () => { await fetchRSSLectures() })
