@@ -1,25 +1,16 @@
-import admin from "firebase-admin"
+import admin from "../config/firebase.js";
 
-export const sendNotification = async (title, body) => {
-
+export const sendNotification = async (title, body, topic = "all", target = "main") => {
   const message = {
-    notification: {
-      title: title,
-      body: body
-    },
-    topic: "all"
-  }
+    notification: { title, body },
+    data: { target }, // 👈 pass target activity
+    topic
+  };
 
   try {
-
-    await admin.messaging().send(message)
-
-    console.log("Notification sent")
-
+    await admin.messaging().send(message);
+    console.log(`✅ Notification sent to topic: ${topic}, target: ${target}`);
   } catch (error) {
-
-    console.error(error)
-
+    console.error("❌ Notification error:", error.message);
   }
-
-}
+};

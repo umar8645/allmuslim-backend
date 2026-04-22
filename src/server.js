@@ -1,64 +1,38 @@
-import dotenv from "dotenv"
-dotenv.config()
+import express from "express";
+import dotenv from "dotenv";
+import connectDB from "./src/config/db.js";
+import { errorHandler } from "./src/middleware/errorHandler.js";
+import { apiLimiter } from "./src/middleware/rateLimiter.js";
 
-import express from "express"
-import cors from "cors"
-import cron from "node-cron"
+dotenv.config();
+connectDB();
 
-import connectDB from "./config/database.js"
+const app = express();
+app.use(express.json());
+app.use(apiLimiter);
 
-import lectureRoutes from "./routes/lectures.js"
-import authRoutes from "./routes/auth.js"
-import aiRoutes from "./routes/ai.js"
-import globalSearchRoutes from "./routes/globalSearch.js"
-import liveRoutes from "./routes/live.js"
-import downloadRoutes from "./routes/download.js"
-import historyRoutes from "./routes/history.js"
-import scholarRoutes from "./routes/scholars.js"
+// Routes
+import authRoutes from "./src/routes/authRoutes.js";
+import lectureRoutes from "./src/routes/lectureRoutes.js";
+import scholarRoutes from "./src/routes/scholarRoutes.js";
+import historyRoutes from "./src/routes/historyRoutes.js";
+import liveRoutes from "./src/routes/liveRoutes.js";
+import globalRoutes from "./src/routes/globalRoutes.js";
+import aiRoutes from "./src/routes/aiRoutes.js";
 
-import { fetchYouTubeLectures } from "./crawlers/youtubeCrawler.js"
-import { fetchRSSLectures } from "./crawlers/rssCrawler.js"
+app.use("/api/auth", authRoutes);
+app.use("/api/lectures", lectureRoutes);
+app.use("/api/scholars", scholarRoutes);
+app.use("/api/history", historyRoutes);
+app.use("/api/live", liveRoutes);
+app.use("/api/global", globalRoutes);
+app.use("/api/ai", aiRoutes);
 
-import { apiLimiter } from "./middleware/rateLimiter.js"
-import { errorHandler } from "./middleware/errorMiddleware.js"
+app.use(errorHandler);
 
-const app = express()
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+import app from "./src/app.js";
 
-const requiredEnv = ["OPENAI_API_KEY","YOUTUBE_API_KEYS","MONGO_URI","JWT_SECRET"]
-for (const key of requiredEnv) {
-  if (!process.env[key]) {
-    console.error(`${key} missing in .env`)
-    process.exit(1)
-  }
-}
-
-app.set("trust proxy", 1)
-
-app.use(cors())
-app.use(express.json())
-app.use(apiLimiter)
-
-connectDB()
-
-app.get("/", (req, res) => {
-  res.json({ name: "AllMuslim API", status: "running" })
-})
-
-app.use("/api/auth", authRoutes)
-app.use("/api/lectures", lectureRoutes)
-app.use("/api/ai", aiRoutes)
-app.use("/api/search", globalSearchRoutes)
-app.use("/api/live", liveRoutes)
-app.use("/api/download", downloadRoutes)
-app.use("/api/history", historyRoutes)
-app.use("/api/scholars", scholarRoutes)
-
-app.use(errorHandler)
-
-const PORT = process.env.PORT || 5000
-app.listen(PORT, () => {
-  console.log("AllMuslim Backend running on port " + PORT)
-})
-
-cron.schedule("0 * * * *", async () => { await fetchYouTubeLectures() })
-cron.schedule("30 * * * *", async () => { await fetchRSSLectures() })
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));

@@ -1,6 +1,5 @@
 import Scholar from "../models/Scholar.js";
 
-// ✅ Create new scholar
 export const createScholar = async (req, res) => {
   try {
     const scholar = await Scholar.create(req.body);
@@ -10,7 +9,6 @@ export const createScholar = async (req, res) => {
   }
 };
 
-// ✅ Get all scholars
 export const getScholars = async (req, res) => {
   try {
     const scholars = await Scholar.find();
@@ -20,7 +18,6 @@ export const getScholars = async (req, res) => {
   }
 };
 
-// ✅ Get single scholar
 export const getScholarById = async (req, res) => {
   try {
     const scholar = await Scholar.findById(req.params.id);
@@ -31,7 +28,6 @@ export const getScholarById = async (req, res) => {
   }
 };
 
-// ✅ Update scholar
 export const updateScholar = async (req, res) => {
   try {
     const scholar = await Scholar.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -42,7 +38,6 @@ export const updateScholar = async (req, res) => {
   }
 };
 
-// ✅ Delete scholar
 export const deleteScholar = async (req, res) => {
   try {
     const scholar = await Scholar.findByIdAndDelete(req.params.id);
