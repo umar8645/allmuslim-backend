@@ -1,10 +1,10 @@
 import express from "express";
-import "./services/scheduler.js";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { apiLimiter } from "./middleware/rateLimiter.js";
 
+// Load env variables
 dotenv.config();
 connectDB();
 
@@ -29,6 +29,7 @@ app.use("/api/live", liveRoutes);
 app.use("/api/global", globalRoutes);
 app.use("/api/ai", aiRoutes);
 
+// Error handler
 app.use(errorHandler);
 
 export default app;
