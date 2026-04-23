@@ -18,9 +18,6 @@ import downloadRoutes from "./routes/download.js";
 import historyRoutes from "./routes/historyRoutes.js";
 import scholarRoutes from "./routes/scholarRoutes.js";
 
-import { fetchYouTubeLectures } from "./crawlers/youtubeCrawler.js";
-import { fetchRSSLectures } from "./crawlers/rssCrawler.js";
-
 import { apiLimiter } from "./middleware/rateLimiter.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
 
@@ -68,6 +65,6 @@ app.listen(PORT, () => {
   console.log("✅ AllMuslim Backend running on port " + PORT);
 });
 
-// Cron jobs
-cron.schedule("0 * * * *", async () => { await fetchYouTubeLectures(); });
-cron.schedule("30 * * * *", async () => { await fetchRSSLectures(); });
+// Cron jobs (cire su saboda babu crawlers a project ɗinka)
+// cron.schedule("0 * * * *", async () => { await fetchYouTubeLectures(); });
+// cron.schedule("30 * * * *", async () => { await fetchRSSLectures(); });
