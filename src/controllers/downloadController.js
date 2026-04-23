@@ -1,25 +1,50 @@
-import path from "path";
-import fs from "fs";
+import mongoose from "mongoose";
+import { GridFSBucket } from "mongodb";
 
-// Misali: download lecture file ta ID
-export const downloadLecture = (req, res) => {
+export const downloadLecture = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // A nan zaka iya daidaita inda lecture files suke a server
-    // Misali: ./uploads/lectures/<id>.pdf
-    const filePath = path.join(process.cwd(), "uploads", "lectures", `${id}.pdf`);
+    // Samu current MongoDB connection daga Mongoose
+    const db = mongoose.connection.db;
 
-    if (fs.existsSync(filePath)) {
-      res.download(filePath, `${id}.pdf`, (err) => {
-        if (err) {
-          console.error("❌ Error sending file:", err);
-          res.status(500).json({ error: "Error downloading file" });
-        }
-      });
-    } else {
-      res.status(404).json({ error: "Lecture file not found" });
+    if (!db) {
+      return res.status(500).json({ error: "Database connection not available" });
     }
+
+    // Ƙirƙiri GridFS bucket
+    const bucket = new GridFSBucket(db, {
+      bucketName: "lectures" // zai yi amfani da collections: lectures.files & lectures.chunks
+    });
+
+    // Convert id zuwa ObjectId
+    let fileId;
+    try {
+      fileId = new mongoose.Types.ObjectId(id);
+    } catch {
+      return res.status(400).json({ error: "Invalid file ID format" });
+    }
+
+    // Bincika ko fayil ɗin yana nan
+    const files = await db.collection("lectures.files").find({ _id: fileId }).toArray();
+    if (!files || files.length === 0) {
+      return res.status(404).json({ error: "Lecture file not found" });
+    }
+
+    // Saita headers kafin streaming
+    res.set("Content-Type", files[0].contentType || "application/octet-stream");
+    res.set("Content-Disposition", `attachment; filename="${files[0].filename}"`);
+
+    // Stream file daga GridFS zuwa response
+    const downloadStream = bucket.openDownloadStream(fileId);
+
+    downloadStream.on("error", (err) => {
+      console.error("❌ Error streaming file:", err);
+      res.status(500).json({ error: "Error downloading file" });
+    });
+
+    downloadStream.pipe(res);
+
   } catch (error) {
     console.error("❌ Download error:", error.message);
     res.status(500).json({ error: "Server error during download" });
