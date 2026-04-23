@@ -4,7 +4,6 @@ import connectDB from "./config/db.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { apiLimiter } from "./middleware/rateLimiter.js";
 
-// Load env variables
 dotenv.config();
 connectDB();
 
@@ -21,6 +20,7 @@ import liveRoutes from "./routes/liveRoutes.js";
 import globalRoutes from "./routes/globalRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 
+// Register routes once
 app.use("/api/auth", authRoutes);
 app.use("/api/lectures", lectureRoutes);
 app.use("/api/scholars", scholarRoutes);
@@ -28,6 +28,14 @@ app.use("/api/history", historyRoutes);
 app.use("/api/live", liveRoutes);
 app.use("/api/global", globalRoutes);
 app.use("/api/ai", aiRoutes);
+
+// Health check route
+app.get("/api/health", (req, res) => {
+  res.json({
+    success: true,
+    message: "✅ Server is healthy and running"
+  });
+});
 
 // Error handler
 app.use(errorHandler);
