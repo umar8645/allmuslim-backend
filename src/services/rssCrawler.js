@@ -14,6 +14,7 @@ const feeds = [
   "https://islamicfinder.org/news/feed"
 ];
 
+// Wannan yana shigo da lectures daga RSS feeds
 export const fetchRSSLectures = async () => {
   for (let url of feeds) {
     try {
@@ -42,5 +43,20 @@ export const fetchRSSLectures = async () => {
     } catch (error) {
       console.error("RSS error:", error.message);
     }
+  }
+};
+
+// Wannan yana dawo da trending lectures daga DB
+export const getTrendingLectures = async () => {
+  try {
+    // Misali: dawo da lectures 10 na ƙarshe da aka shigo
+    const lectures = await Lecture.find({ source: "rss" })
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    return lectures;
+  } catch (error) {
+    console.error("❌ Error fetching trending lectures:", error.message);
+    throw error;
   }
 };
