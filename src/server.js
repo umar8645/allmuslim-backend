@@ -8,7 +8,7 @@ import cron from "node-cron";
 import connectDB from "./config/database.js";
 import admin from "./config/firebase.js";
 
-// Routes (daidai da sunayen fayilolin da ke cikin src/routes/)
+// Routes
 import lectureRoutes from "./routes/lectureRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
@@ -23,17 +23,18 @@ import { errorHandler } from "./middleware/errorMiddleware.js";
 
 const app = express();
 
-// Duba environment variables
-const requiredEnv = ["OPENAI_API_KEY","YOUTUBE_API_KEYS","MONGO_URI","JWT_SECRET"];
+// ✅ Duba environment variables
+const requiredEnv = ["OPENAI_API_KEY", "OPENAI_MODEL", "YOUTUBE_API_KEYS", "MONGO_URI", "JWT_SECRET", "REDIS_URL"];
 for (const key of requiredEnv) {
   if (!process.env[key]) {
-    console.error(`${key} missing in .env`);
+    console.error(`❌ ${key} missing in .env`);
     process.exit(1);
   }
 }
+console.log("✅ Environment variables loaded successfully");
 
+// Express setup
 app.set("trust proxy", 1);
-
 app.use(cors());
 app.use(express.json());
 app.use(apiLimiter);
@@ -62,9 +63,9 @@ app.use(errorHandler);
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log("✅ AllMuslim Backend running on port " + PORT);
+  console.log(`✅ AllMuslim Backend running on port ${PORT}`);
 });
 
-// Cron jobs (cire su saboda babu crawlers a project ɗinka)
+// Cron jobs (disabled for now)
 // cron.schedule("0 * * * *", async () => { await fetchYouTubeLectures(); });
 // cron.schedule("30 * * * *", async () => { await fetchRSSLectures(); });

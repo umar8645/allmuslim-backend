@@ -2,53 +2,40 @@ import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Classify lecture
+// General AI service wrapper
+export const runAIService = async (systemPrompt, userMessage) => {
+  try {
+    const completion = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage }
+      ]
+    });
+
+    const reply = completion?.choices?.[0]?.message?.content;
+    if (!reply) {
+      console.error("No reply from OpenAI:", completion);
+      return "";
+    }
+    return reply;
+  } catch (error) {
+    console.error("AI service error:", error);
+    return "";
+  }
+};
+
+// Example: classify lecture
 export const classifyLecture = async (text) => {
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are an Islamic lecture classifier." },
-        { role: "user", content: `Classify this lecture: ${text}` }
-      ]
-    });
-    return completion.choices[0].message.content;
-  } catch (error) {
-    console.error("AI classify error:", error.message);
-    return "";
-  }
+  return await runAIService("You are an Islamic lecture classifier.", `Classify this lecture: ${text}`);
 };
 
-// Summarize lecture
+// Example: summarize lecture
 export const summarizeLecture = async (text) => {
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "Summarize this Islamic lecture in a short paragraph." },
-        { role: "user", content: text }
-      ]
-    });
-    return completion.choices[0].message.content;
-  } catch (error) {
-    console.error("AI summary error:", error.message);
-    return "";
-  }
+  return await runAIService("Summarize this Islamic lecture in a short paragraph.", text);
 };
 
-// Detect Quran ayah
+// Example: detect Quran ayah
 export const detectQuranAyah = async (text) => {
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "Find Quran verses mentioned in this lecture title." },
-        { role: "user", content: text }
-      ]
-    });
-    return completion.choices[0].message.content;
-  } catch (error) {
-    console.error("Quran detection error:", error.message);
-    return [];
-  }
+  return await runAIService("Find Quran verses mentioned in this lecture title.", text);
 };
