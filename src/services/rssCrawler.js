@@ -14,7 +14,7 @@ const feeds = [
   "https://islamicfinder.org/news/feed"
 ];
 
-// ✅ RSS import daidaita da Lecture schema
+// ✅ RSS import
 export const fetchRSSLectures = async () => {
   for (let url of feeds) {
     try {
@@ -28,11 +28,11 @@ export const fetchRSSLectures = async () => {
 
           await Lecture.create({
             title: item.title,
-            scholar: feed.title || "Unknown Scholar",   // ✅ scholar field
+            scholar: feed.title || "Unknown Scholar",
             source: "rss",
             platform: "rss",
             url: item.link,
-            thumbnail: item.enclosure?.url || "",       // ✅ thumbnail field
+            thumbnail: item.enclosure?.url || "",
             transcript: summary,
             quranReferences: ayahs,
             classification
@@ -43,5 +43,19 @@ export const fetchRSSLectures = async () => {
     } catch (error) {
       console.error("RSS error:", error.message);
     }
+  }
+};
+
+// ✅ Trending lectures
+export const getTrendingLectures = async () => {
+  try {
+    const lectures = await Lecture.find({ source: "rss" })
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    return lectures;
+  } catch (error) {
+    console.error("❌ Error fetching trending lectures:", error.message);
+    throw error;
   }
 };
