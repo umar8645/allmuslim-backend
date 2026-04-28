@@ -17,6 +17,7 @@ const keywords = [
   "Islamic education"
 ];
 
+// ✅ YouTube import daidaita da Lecture schema
 export const fetchYouTubeLectures = async () => {
   try {
     for (let keyword of keywords) {
@@ -30,11 +31,11 @@ export const fetchYouTubeLectures = async () => {
 
           await Lecture.create({
             title: video.title,
-            scholar: video.channelTitle || "YouTube",
+            scholar: video.channelTitle || "YouTube Scholar", // ✅ scholar field
             source: "youtube",
             platform: "youtube",
             url: video.link,
-            thumbnail: video.thumbnails?.default?.url || "",
+            thumbnail: video.thumbnails?.default?.url || "",   // ✅ thumbnail field
             transcript: summary,
             quranReferences: ayahs,
             classification
