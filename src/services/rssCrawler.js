@@ -14,13 +14,12 @@ const feeds = [
   "https://islamicfinder.org/news/feed"
 ];
 
-// ✅ RSS import
 export const fetchRSSLectures = async () => {
   for (let url of feeds) {
     try {
       const feed = await parser.parseURL(url);
       for (let item of feed.items) {
-        const exists = await Lecture.findOne({ url: item.link });
+        const exists = await Lecture.findOne({ url: item.enclosure?.url || item.link });
         if (!exists) {
           const summary = await summarizeLecture(item.title);
           const ayahs = await detectQuranAyah(item.title);
@@ -30,8 +29,9 @@ export const fetchRSSLectures = async () => {
             title: item.title,
             scholar: feed.title || "Unknown Scholar",
             source: "rss",
-            platform: "rss",
-            url: item.link,
+            platform: item.enclosure?.url ? "rss-media" : "rss-page",
+            url: item.enclosure?.url || "",   // 🔑 playable mp3/mp4 idan akwai
+            pageUrl: item.link,               // 🔑 article page idan babu media
             thumbnail: item.enclosure?.url || "",
             transcript: summary,
             quranReferences: ayahs,
@@ -43,19 +43,5 @@ export const fetchRSSLectures = async () => {
     } catch (error) {
       console.error("RSS error:", error.message);
     }
-  }
-};
-
-// ✅ Trending lectures
-export const getTrendingLectures = async () => {
-  try {
-    const lectures = await Lecture.find({ source: "rss" })
-      .sort({ createdAt: -1 })
-      .limit(10);
-
-    return lectures;
-  } catch (error) {
-    console.error("❌ Error fetching trending lectures:", error.message);
-    throw error;
   }
 };

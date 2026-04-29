@@ -17,13 +17,13 @@ const keywords = [
   "Islamic education"
 ];
 
-// ✅ YouTube import daidaita da Lecture schema
 export const fetchYouTubeLectures = async () => {
   try {
     for (let keyword of keywords) {
       const results = await youtubeSearch(keyword, { maxResults: 10, key: getKey() });
       for (let video of results.results) {
-        const exists = await Lecture.findOne({ url: video.link });
+        const videoId = video.id; // 🔑 videoId kawai
+        const exists = await Lecture.findOne({ url: videoId });
         if (!exists) {
           const summary = await summarizeLecture(video.title);
           const ayahs = await detectQuranAyah(video.title);
@@ -31,11 +31,11 @@ export const fetchYouTubeLectures = async () => {
 
           await Lecture.create({
             title: video.title,
-            scholar: video.channelTitle || "YouTube Scholar", // ✅ scholar field
+            scholar: video.channelTitle || "YouTube Scholar",
             source: "youtube",
             platform: "youtube",
-            url: video.link,
-            thumbnail: video.thumbnails?.default?.url || "",   // ✅ thumbnail field
+            url: videoId,   // 🔑 videoId kawai
+            thumbnail: video.thumbnails?.default?.url || "",
             transcript: summary,
             quranReferences: ayahs,
             classification
