@@ -45,3 +45,15 @@ export const fetchRSSLectures = async () => {
     }
   }
 };
+
+// ✅ Sabon function don trending lectures
+export const getTrendingLectures = async () => {
+  try {
+    // misali: trending = sabbin lectures 20
+    const lectures = await Lecture.find().sort({ createdAt: -1 }).limit(20);
+    return lectures;
+  } catch (error) {
+    console.error("Trending lectures error:", error.message);
+    return [];
+  }
+};
