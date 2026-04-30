@@ -8,7 +8,7 @@ export const authMiddleware = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.id;
+    req.userId = decoded.id; // userId daga JWT payload
     next();
   } catch (error) {
     res.status(401).json({ message: "Invalid token" });

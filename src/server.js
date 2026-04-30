@@ -18,6 +18,7 @@ import downloadRoutes from "./routes/download.js";
 import historyRoutes from "./routes/historyRoutes.js";
 import scholarRoutes from "./routes/scholarRoutes.js";
 
+import { authMiddleware } from "./middleware/authMiddleware.js";
 import { apiLimiter } from "./middleware/rateLimiter.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
 
@@ -47,14 +48,16 @@ app.get("/", (req, res) => {
   res.json({ name: "AllMuslim API", status: "running" });
 });
 
-// API routes
+// ✅ Protected routes (auth required)
+app.use("/api/history", authMiddleware(["user","admin"]), historyRoutes);
+app.use("/api/download", authMiddleware(["user","admin"]), downloadRoutes);
+
+// ✅ Public routes (no auth)
 app.use("/api/auth", authRoutes);
 app.use("/api/lectures", lectureRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/search", globalSearchRoutes);
 app.use("/api/live", liveRoutes);
-app.use("/api/download", downloadRoutes);
-app.use("/api/history", historyRoutes);
 app.use("/api/scholars", scholarRoutes);
 
 // Error handler
