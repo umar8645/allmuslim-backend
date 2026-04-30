@@ -7,7 +7,6 @@ export const downloadLecture = async (req, res) => {
 
     // Samu current MongoDB connection daga Mongoose
     const db = mongoose.connection.db;
-
     if (!db) {
       return res.status(500).json({ error: "Database connection not available" });
     }

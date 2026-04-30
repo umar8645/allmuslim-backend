@@ -3,7 +3,7 @@ import { downloadLecture } from "../controllers/downloadController.js";
 
 const router = express.Router();
 
+// GET /api/download/:id
 router.get("/:id", downloadLecture);
 
-// Wannan dole ne ya kasance default export
 export default router;
