@@ -63,6 +63,11 @@ app.use("/api/scholars", scholarRoutes);
 // Error handler
 app.use(errorHandler);
 
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", uptime: process.uptime() });
+});
+
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
