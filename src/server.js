@@ -4,6 +4,8 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import cron from "node-cron";
+import http from "http";
+import { Server } from "socket.io";
 
 import connectDB from "./config/database.js";
 import admin from "./config/firebase.js";
@@ -23,6 +25,40 @@ import { apiLimiter } from "./middleware/rateLimiter.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
 
 const app = express();
+const server = http.createServer(app);
+
+// ✅ Setup Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+// Export io domin controllers su iya amfani da shi
+export { io };
+
+// ✅ Socket.IO event handlers
+io.on("connection", (socket) => {
+  console.log("🔌 New client connected:", socket.id);
+
+  // Example: join a lecture room
+  socket.on("joinLecture", (lectureId) => {
+    socket.join(lectureId);
+    console.log(`📚 User ${socket.id} joined lecture ${lectureId}`);
+  });
+
+  // Example: send live updates
+  socket.on("lectureUpdate", (data) => {
+    io.to(data.lectureId).emit("lectureUpdate", data);
+    console.log(`📡 Update sent to lecture ${data.lectureId}`);
+  });
+
+  // Handle disconnect
+  socket.on("disconnect", () => {
+    console.log("❌ Client disconnected:", socket.id);
+  });
+});
 
 // ✅ Duba environment variables
 const requiredEnv = ["OPENAI_API_KEY", "OPENAI_MODEL", "YOUTUBE_API_KEYS", "MONGO_URI", "JWT_SECRET", "REDIS_URL"];
@@ -70,7 +106,7 @@ app.get("/health", (req, res) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`✅ AllMuslim Backend running on port ${PORT}`);
 });
 
