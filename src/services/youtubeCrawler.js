@@ -22,8 +22,10 @@ export const fetchYouTubeLectures = async () => {
     for (let keyword of keywords) {
       const results = await youtubeSearch(keyword, { maxResults: 10, key: getKey() });
       for (let video of results.results) {
-        const videoId = video.id; // 🔑 videoId kawai
-        const exists = await Lecture.findOne({ url: videoId });
+        const videoId = video.id?.videoId || video.id;
+        const videoUrl = video.link || `https://www.youtube.com/watch?v=${videoId}`;
+        const exists = await Lecture.findOne({ url: videoUrl });
+
         if (!exists) {
           const summary = await summarizeLecture(video.title);
           const ayahs = await detectQuranAyah(video.title);
@@ -34,8 +36,8 @@ export const fetchYouTubeLectures = async () => {
             scholar: video.channelTitle || "YouTube Scholar",
             source: "youtube",
             platform: "youtube",
-            url: videoId,   // 🔑 videoId kawai
-            thumbnail: video.thumbnails?.default?.url || "",
+            url: videoUrl,
+            thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
             transcript: summary,
             quranReferences: ayahs,
             classification

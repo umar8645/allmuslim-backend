@@ -19,20 +19,27 @@ export const fetchRSSLectures = async () => {
     try {
       const feed = await parser.parseURL(url);
       for (let item of feed.items) {
-        const exists = await Lecture.findOne({ url: item.enclosure?.url || item.link });
+        const mediaUrl = item.enclosure?.url;
+        const pageUrl = item.link;
+        const exists = await Lecture.findOne({ url: mediaUrl || pageUrl });
+
         if (!exists) {
           const summary = await summarizeLecture(item.title);
           const ayahs = await detectQuranAyah(item.title);
           const classification = await classifyLecture(item.title);
 
+          const thumbnail = item.enclosure?.type?.startsWith("image/")
+            ? item.enclosure.url
+            : "";
+
           await Lecture.create({
             title: item.title,
             scholar: feed.title || "Unknown Scholar",
             source: "rss",
-            platform: item.enclosure?.url ? "rss-media" : "rss-page",
-            url: item.enclosure?.url || "",   // 🔑 playable mp3/mp4 idan akwai
-            pageUrl: item.link,               // 🔑 article page idan babu media
-            thumbnail: item.enclosure?.url || "",
+            platform: mediaUrl ? "rss-media" : "rss-page",
+            url: mediaUrl || pageUrl,
+            pageUrl,
+            thumbnail,
             transcript: summary,
             quranReferences: ayahs,
             classification
@@ -43,17 +50,5 @@ export const fetchRSSLectures = async () => {
     } catch (error) {
       console.error("RSS error:", error.message);
     }
-  }
-};
-
-// ✅ Sabon function don trending lectures
-export const getTrendingLectures = async () => {
-  try {
-    // misali: trending = sabbin lectures 20
-    const lectures = await Lecture.find().sort({ createdAt: -1 }).limit(20);
-    return lectures;
-  } catch (error) {
-    console.error("Trending lectures error:", error.message);
-    return [];
   }
 };

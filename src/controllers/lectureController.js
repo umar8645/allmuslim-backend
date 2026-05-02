@@ -4,12 +4,15 @@ import { getTrendingLectures } from "../services/rssCrawler.js";
 export const getLectures = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = 20;
+    const limit = parseInt(req.query.limit) || 20;
+    const totalCount = await Lecture.countDocuments();
+
     const lectures = await Lecture.find()
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
-    res.json(lectures);
+
+    res.json({ totalCount, page, results: lectures });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -26,10 +29,20 @@ export const getTrending = async (req, res) => {
 
 export const searchLectures = async (req, res) => {
   try {
-    const { q } = req.query;
+    const { q, page = 1, limit = 20 } = req.query;
     if (!q) return res.json([]);
-    const lectures = await Lecture.find({ $text: { $search: q } }).sort({ createdAt: -1 });
-    res.json(lectures);
+
+    const lectures = await Lecture.find(
+      { $text: { $search: q } },
+      { score: { $meta: "textScore" } }
+    )
+      .sort({ score: { $meta: "textScore" }, createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    const totalCount = await Lecture.countDocuments({ $text: { $search: q } });
+
+    res.json({ totalCount, page, results: lectures });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

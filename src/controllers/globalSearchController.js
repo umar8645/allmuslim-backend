@@ -2,20 +2,22 @@ import Lecture from "../models/Lecture.js";
 
 export const searchGlobalLectures = async (req, res) => {
   try {
-    const { query } = req.query;
+    const { query, page = 1, limit = 20 } = req.query;
     if (!query) {
       return res.status(400).json({ message: "Query is required" });
     }
 
-    // Yin search ta MongoDB text index
     const lectures = await Lecture.find(
       { $text: { $search: query } },
-      { score: { $meta: "textScore" } } // don ranking
+      { score: { $meta: "textScore" } }
     )
       .sort({ score: { $meta: "textScore" }, createdAt: -1 })
-      .limit(50);
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
 
-    res.json({ count: lectures.length, results: lectures });
+    const totalCount = await Lecture.countDocuments({ $text: { $search: query } });
+
+    res.json({ totalCount, page, results: lectures });
   } catch (error) {
     console.error("Global search error:", error.message);
     res.status(500).json({ message: "Error fetching global lectures" });

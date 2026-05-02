@@ -2,6 +2,9 @@ import Scholar from "../models/Scholar.js";
 
 export const createScholar = async (req, res) => {
   try {
+    const exists = await Scholar.findOne({ name: req.body.name });
+    if (exists) return res.status(400).json({ message: "Scholar already exists" });
+
     const scholar = await Scholar.create(req.body);
     res.json(scholar);
   } catch (err) {
@@ -11,8 +14,16 @@ export const createScholar = async (req, res) => {
 
 export const getScholars = async (req, res) => {
   try {
-    const scholars = await Scholar.find();
-    res.json(scholars);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const totalCount = await Scholar.countDocuments();
+
+    const scholars = await Scholar.find()
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.json({ totalCount, page, results: scholars });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
