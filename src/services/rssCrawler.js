@@ -52,3 +52,8 @@ export const fetchRSSLectures = async () => {
     }
   }
 };
+
+// 🔥 Wrapper don lectureController.js
+export const getTrendingLectures = async () => {
+  return await fetchRSSLectures();
+};
