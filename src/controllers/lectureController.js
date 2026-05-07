@@ -1,68 +1,59 @@
+// controllers/lectureController.js
 import Lecture from "../models/Lecture.js";
-import LectureEngagement from "../models/LectureEngagement.js";
+import { getTrendingLectures } from "../services/rssCrawler.js";
 
-// ✅ Top lectures by views
-export const getTopByViews = async (req, res) => {
+export const getLectures = async (req, res) => {
   try {
-    const lectures = await LectureEngagement.find()
-      .sort({ views: -1 })
-      .limit(10)
-      .populate("lectureId");
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const totalCount = await Lecture.countDocuments();
+
+    const lectures = await Lecture.find()
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.json({ totalCount, page, results: lectures });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getTrending = async (req, res) => {
+  try {
+    const lectures = await getTrendingLectures();
     res.json(lectures);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// ✅ Top lectures by likes
-export const getTopByLikes = async (req, res) => {
+export const searchLectures = async (req, res) => {
   try {
-    const lectures = await LectureEngagement.find()
-      .sort({ likes: -1 })
-      .limit(10)
-      .populate("lectureId");
-    res.json(lectures);
+    const { q, page = 1, limit = 20 } = req.query;
+    if (!q) return res.json([]);
+
+    const lectures = await Lecture.find(
+      { $text: { $search: q } },
+      { score: { $meta: "textScore" } }
+    )
+      .sort({ score: { $meta: "textScore" }, createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    const totalCount = await Lecture.countDocuments({ $text: { $search: q } });
+
+    res.json({ totalCount, page, results: lectures });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// ✅ Top lectures by rating
-export const getTopByRating = async (req, res) => {
+// ✅ Feed endpoint (random lectures)
+export const getFeed = async (req, res) => {
   try {
-    const lectures = await LectureEngagement.find()
-      .sort({ rating: -1, ratingCount: -1 })
-      .limit(10)
-      .populate("lectureId");
+    const lectures = await Lecture.aggregate([{ $sample: { size: 20 } }]);
     res.json(lectures);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// ✅ Top trending lectures (custom score)
-export const getTopTrending = async (req, res) => {
-  try {
-    const lectures = await LectureEngagement.aggregate([
-      {
-        $project: {
-          lectureId: 1,
-          score: {
-            $add: [
-              { $multiply: ["$views", 0.5] },
-              { $multiply: ["$likes", 2] },
-              { $multiply: ["$shares", 1.5] },
-              { $multiply: ["$rating", 3] }
-            ]
-          }
-        }
-      },
-      { $sort: { score: -1 } },
-      { $limit: 10 }
-    ]);
-
-    const populated = await Lecture.populate(lectures, { path: "lectureId" });
-    res.json(populated);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
