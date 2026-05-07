@@ -1,3 +1,4 @@
+// services/youtubeCrawler.js
 import youtubeSearch from "youtube-search";
 import Lecture from "../models/Lecture.js";
 import { summarizeLecture, detectQuranAyah, classifyLecture } from "./aiService.js";
@@ -23,13 +24,21 @@ export const fetchYouTubeLectures = async () => {
       const results = await youtubeSearch(keyword, { maxResults: 10, key: getKey() });
       for (let video of results.results) {
         const videoId = video.id?.videoId || video.id;
+        // ✅ Tabbatar da cikakken URL
         const videoUrl = video.link || `https://www.youtube.com/watch?v=${videoId}`;
-        const exists = await Lecture.findOne({ url: videoUrl });
 
+        // ✅ Sanitize URL
+        if (!videoUrl.startsWith("http")) continue;
+
+        const exists = await Lecture.findOne({ url: videoUrl });
         if (!exists) {
           const summary = await summarizeLecture(video.title);
           const ayahs = await detectQuranAyah(video.title);
           const classification = await classifyLecture(video.title);
+
+          // ✅ Sanitize thumbnail
+          let thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+          if (!thumbnail.startsWith("http")) thumbnail = "";
 
           await Lecture.create({
             title: video.title,
@@ -37,7 +46,7 @@ export const fetchYouTubeLectures = async () => {
             source: "youtube",
             platform: "youtube",
             url: videoUrl,
-            thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+            thumbnail,
             transcript: summary,
             quranReferences: ayahs,
             classification

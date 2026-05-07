@@ -1,3 +1,4 @@
+// controllers/scholarController.js
 import Scholar from "../models/Scholar.js";
 
 export const createScholar = async (req, res) => {

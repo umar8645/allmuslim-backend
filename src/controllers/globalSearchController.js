@@ -1,3 +1,4 @@
+// controllers/globalSearchController.js
 import Lecture from "../models/Lecture.js";
 
 export const searchGlobalLectures = async (req, res) => {

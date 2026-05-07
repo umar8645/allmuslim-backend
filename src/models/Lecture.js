@@ -1,55 +1,65 @@
+// models/Lecture.js
 import mongoose from "mongoose";
 
 const LectureSchema = new mongoose.Schema({
-  // Basic info
   title: { type: String, required: true, trim: true },
   scholar: { type: String, required: true, trim: true },
   source: { type: String, trim: true },
   platform: { type: String, enum: ["youtube", "rss-media", "rss-page"], required: true },
-  url: { type: String, required: true, unique: true },
+  url: {
+    type: String,
+    required: true,
+    unique: true,
+    validate: {
+      validator: v => /^https?:\/\//.test(v),
+      message: props => `${props.value} is not a valid URL`
+    }
+  },
   pageUrl: { type: String, trim: true },
-  slug: { type: String, unique: true }, // SEO-friendly URL
+  slug: { type: String, unique: true },
 
-  // Media
-  thumbnail: { type: String, default: "" },
-  duration: { type: Number, default: 0 }, // seconds
-  fileSize: { type: Number, default: 0 }, // bytes
+  thumbnail: {
+    type: String,
+    default: "",
+    validate: {
+      validator: v => !v || /^https?:\/\//.test(v),
+      message: props => `${props.value} is not a valid thumbnail URL`
+    }
+  },
+
+  duration: { type: Number, default: 0 },
+  fileSize: { type: Number, default: 0 },
   format: { type: String, enum: ["mp3", "mp4", "pdf", "other"], default: "mp4" },
   quality: { type: String, enum: ["low", "medium", "high", "hd"], default: "medium" },
   isDownloadable: { type: Boolean, default: true },
 
-  // Engagement metrics
   views: { type: Number, default: 0 },
   favorites: { type: Number, default: 0 },
   likes: { type: Number, default: 0 },
   shares: { type: Number, default: 0 },
   commentsCount: { type: Number, default: 0 },
 
-  // Content metadata
   topic: { type: String, index: true },
   language: { type: String, default: "Arabic" },
   keywords: { type: [String], index: true },
   transcript: { type: String },
   quranReferences: { type: [String] },
   hadithReferences: { type: [String] },
-  classification: { type: String }, // tafsir, fiqh, hadith, etc.
+  classification: { type: String },
   tags: { type: [String], default: [] },
 
-  // Rating system
   rating: { type: Number, min: 0, max: 5, default: 0 },
   ratingCount: { type: Number, default: 0 },
 
-  // Relations
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
-  // Lifecycle
   publishedAt: { type: Date },
   deletedAt: { type: Date },
   isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
-// Indexes for fast search
+// ✅ Indexes for fast search
 LectureSchema.index({
   title: "text",
   scholar: "text",

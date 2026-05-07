@@ -1,3 +1,4 @@
+// services/rssCrawler.js
 import Parser from "rss-parser";
 import Lecture from "../models/Lecture.js";
 import { summarizeLecture, detectQuranAyah, classifyLecture } from "./aiService.js";
@@ -21,23 +22,28 @@ export const fetchRSSLectures = async () => {
       for (let item of feed.items) {
         const mediaUrl = item.enclosure?.url;
         const pageUrl = item.link;
-        const exists = await Lecture.findOne({ url: mediaUrl || pageUrl });
+        const lectureUrl = mediaUrl || pageUrl;
 
+        // ✅ Sanitize URL
+        if (!lectureUrl || !lectureUrl.startsWith("http")) continue;
+
+        const exists = await Lecture.findOne({ url: lectureUrl });
         if (!exists) {
           const summary = await summarizeLecture(item.title);
           const ayahs = await detectQuranAyah(item.title);
           const classification = await classifyLecture(item.title);
 
-          const thumbnail = item.enclosure?.type?.startsWith("image/")
+          let thumbnail = item.enclosure?.type?.startsWith("image/")
             ? item.enclosure.url
             : "";
+          if (thumbnail && !thumbnail.startsWith("http")) thumbnail = "";
 
           await Lecture.create({
             title: item.title,
             scholar: feed.title || "Unknown Scholar",
             source: "rss",
             platform: mediaUrl ? "rss-media" : "rss-page",
-            url: mediaUrl || pageUrl,
+            url: lectureUrl,
             pageUrl,
             thumbnail,
             transcript: summary,
@@ -55,5 +61,11 @@ export const fetchRSSLectures = async () => {
 
 // 🔥 Wrapper don lectureController.js
 export const getTrendingLectures = async () => {
-  return await fetchRSSLectures();
+  // Import sabbin lectures daga RSS
+  await fetchRSSLectures();
+
+  // ✅ Dawo da trending lectures daga DB
+  return await Lecture.find()
+    .sort({ views: -1, likes: -1, createdAt: -1 }) // sorting bisa views, likes, da sabo
+    .limit(20);
 };
