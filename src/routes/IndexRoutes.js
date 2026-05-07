@@ -1,6 +1,7 @@
+// routes/index.js
 import express from "express";
 
-// ✅ Import controllers
+// ✅ Import sub-routes
 import lectureRoutes from "./lectureRoutes.js";
 import scholarRoutes from "./scholarRoutes.js";
 import globalSearchRoutes from "./globalSearchRoutes.js";

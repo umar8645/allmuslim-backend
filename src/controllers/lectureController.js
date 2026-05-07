@@ -1,7 +1,7 @@
-// controllers/topLecturesController.js
 import Lecture from "../models/Lecture.js";
 import LectureEngagement from "../models/LectureEngagement.js";
 
+// ✅ Top lectures by views
 export const getTopByViews = async (req, res) => {
   try {
     const lectures = await LectureEngagement.find()
@@ -14,6 +14,7 @@ export const getTopByViews = async (req, res) => {
   }
 };
 
+// ✅ Top lectures by likes
 export const getTopByLikes = async (req, res) => {
   try {
     const lectures = await LectureEngagement.find()
@@ -26,6 +27,7 @@ export const getTopByLikes = async (req, res) => {
   }
 };
 
+// ✅ Top lectures by rating
 export const getTopByRating = async (req, res) => {
   try {
     const lectures = await LectureEngagement.find()
@@ -38,6 +40,7 @@ export const getTopByRating = async (req, res) => {
   }
 };
 
+// ✅ Top trending lectures (custom score)
 export const getTopTrending = async (req, res) => {
   try {
     const lectures = await LectureEngagement.aggregate([
