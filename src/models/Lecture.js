@@ -39,9 +39,9 @@ const LectureSchema = new mongoose.Schema({
   shares: { type: Number, default: 0 },
   commentsCount: { type: Number, default: 0 },
 
-  topic: { type: String, index: true },
+  topic: { type: String },   // ❌ cire index: true
   language: { type: String, default: "Arabic" },
-  keywords: { type: [String], index: true },
+  keywords: { type: [String] }, // ❌ cire index: true
   transcript: { type: String },
   quranReferences: { type: [String] },
   hadithReferences: { type: [String] },
